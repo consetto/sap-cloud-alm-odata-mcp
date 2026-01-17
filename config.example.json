@@ -1,0 +1,14 @@
+{
+  "_comment": "Option A: OAuth2 mode (production) - use tenant, region, client_id, client_secret",
+  "_comment2": "Option B: Sandbox mode - use sandbox=true and api_key",
+
+  "sandbox": false,
+
+  "tenant": "your-tenant-name",
+  "region": "eu10",
+  "client_id": "sb-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx!bxxxxx|calm!bxxxxx",
+  "client_secret": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx=",
+
+  "debug": false,
+  "timeout_seconds": 30
+}

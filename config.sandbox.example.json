@@ -1,0 +1,6 @@
+{
+  "sandbox": true,
+  "api_key": "your-sap-sandbox-api-key",
+  "debug": true,
+  "timeout_seconds": 30
+}

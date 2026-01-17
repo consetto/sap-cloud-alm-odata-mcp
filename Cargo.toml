@@ -1,0 +1,52 @@
+[package]
+name = "sap-cloud-alm-mcp"
+version = "0.1.0"
+edition = "2021"
+authors = ["Michael Scharf, Consetto GmbH"]
+description = "MCP Server for SAP Cloud ALM APIs"
+license = "MIT"
+
+[dependencies]
+# MCP SDK
+rmcp = { version = "0.13", features = ["server", "transport-io"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Schema generation for MCP tools
+schemars = "0.8"
+
+# Authentication
+base64 = "0.22"
+
+# Date/time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# URL encoding
+urlencoding = "2.1"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# CLI argument parsing
+clap = { version = "4.0", features = ["derive"] }
+
+# Async traits
+async-trait = "0.1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
