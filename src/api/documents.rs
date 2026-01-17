@@ -11,15 +11,21 @@ use crate::odata::{ODataClient, ODataCollection, ODataQuery};
 #[serde(rename_all = "camelCase")]
 pub struct Document {
     pub uuid: Option<String>,
+    #[serde(rename = "displayId")]
+    pub display_id: Option<String>,
     pub title: Option<String>,
     pub content: Option<String>,
-    pub status_code: Option<String>,
-    pub priority_code: Option<String>,
+    pub status_code: Option<i32>,
+    pub priority_code: Option<i32>,
+    #[serde(rename = "documentTypeCode")]
     pub type_code: Option<String>,
     pub source_code: Option<String>,
     pub project_id: Option<String>,
+    pub scope_id: Option<String>,
     pub modified_at: Option<String>,
     pub created_at: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 /// Document type code.
