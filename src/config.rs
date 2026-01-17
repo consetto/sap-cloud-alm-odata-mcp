@@ -146,49 +146,59 @@ impl Config {
         self.sandbox
     }
 
+    /// Get the API path prefix.
+    /// Sandbox mode uses direct paths, OAuth2 mode uses /api prefix.
+    fn api_path_prefix(&self) -> &'static str {
+        if self.sandbox {
+            ""
+        } else {
+            "/api"
+        }
+    }
+
     /// Get the Features API URL.
     pub fn features_api_url(&self) -> String {
-        format!("{}/api/calm-features/v1", self.api_base_url())
+        format!("{}{}/calm-features/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Documents API URL.
     pub fn documents_api_url(&self) -> String {
-        format!("{}/api/calm-documents/v1", self.api_base_url())
+        format!("{}{}/calm-documents/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Tasks API URL.
     pub fn tasks_api_url(&self) -> String {
-        format!("{}/api/calm-tasks/v1", self.api_base_url())
+        format!("{}{}/calm-tasks/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Projects API URL.
     pub fn projects_api_url(&self) -> String {
-        format!("{}/api/calm-projects/v1", self.api_base_url())
+        format!("{}{}/calm-projects/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Test Management API URL.
     pub fn testmanagement_api_url(&self) -> String {
-        format!("{}/api/calm-testmanagement/v1", self.api_base_url())
+        format!("{}{}/calm-testmanagement/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Process Hierarchy API URL.
     pub fn processhierarchy_api_url(&self) -> String {
-        format!("{}/api/calm-processhierarchy/v1", self.api_base_url())
+        format!("{}{}/calm-processhierarchy/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Analytics API URL.
     pub fn analytics_api_url(&self) -> String {
-        format!("{}/api/calm-analytics/v1", self.api_base_url())
+        format!("{}{}/calm-analytics/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Process Monitoring API URL.
     pub fn processmonitoring_api_url(&self) -> String {
-        format!("{}/api/calm-processmonitoring/v1", self.api_base_url())
+        format!("{}{}/calm-processmonitoring/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Logs API URL.
     pub fn logs_api_url(&self) -> String {
-        format!("{}/api/calm-logs/v1", self.api_base_url())
+        format!("{}{}/calm-logs/v1", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get timeout as Duration.
@@ -256,7 +266,7 @@ mod tests {
         );
         assert_eq!(
             config.features_api_url(),
-            "https://sandbox.api.sap.com/SAPCALM/api/calm-features/v1"
+            "https://sandbox.api.sap.com/SAPCALM/calm-features/v1"
         );
         assert!(config.is_sandbox());
     }

@@ -16,7 +16,7 @@ pub struct Feature {
     pub description: Option<String>,
     pub project_id: Option<String>,
     pub status_code: Option<String>,
-    pub priority_code: Option<String>,
+    pub priority_code: Option<i32>,
     pub release_id: Option<String>,
     pub scope_id: Option<String>,
     pub responsible_id: Option<String>,
@@ -24,6 +24,9 @@ pub struct Feature {
     pub created_at: Option<String>,
     #[serde(rename = "type")]
     pub feature_type: Option<String>,
+    pub workstream_id: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 /// External reference entity.
