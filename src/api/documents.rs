@@ -141,7 +141,7 @@ impl DocumentsClient {
     /// List document statuses.
     pub async fn list_statuses(&self) -> Result<ODataCollection<DocumentStatus>, ApiError> {
         self.odata_client
-            .get_collection("/DocumentStatuses", None)
+            .get_collection("/DocumentStatus", None)
             .await
     }
 }

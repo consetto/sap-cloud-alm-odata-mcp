@@ -208,7 +208,7 @@ impl FeaturesClient {
     /// List status codes.
     pub async fn list_statuses(&self) -> Result<ODataCollection<StatusCode>, ApiError> {
         self.odata_client
-            .get_collection("/FeatureStatuses", None)
+            .get_collection("/FeatureStatus", None)
             .await
     }
 }
