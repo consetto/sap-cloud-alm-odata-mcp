@@ -133,28 +133,30 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 
 ## Available Tools
 
+> **Note:** Tools marked with ⚠️ **Experimental** are write operations that modify data in SAP Cloud ALM. These tools require explicit user confirmation before execution.
+
 ### Features API (OData)
 | Tool | Description |
 |------|-------------|
 | `list_features` | List features with OData filtering |
 | `get_feature` | Get a single feature by UUID |
-| `create_feature` | Create a new feature |
-| `update_feature` | Update an existing feature |
-| `delete_feature` | Delete a feature |
+| `create_feature` | ⚠️ **Experimental** - Create a new feature |
+| `update_feature` | ⚠️ **Experimental** - Update an existing feature |
+| `delete_feature` | ⚠️ **Experimental** - Delete a feature |
 | `list_feature_statuses` | List available status codes |
 | `list_feature_priorities` | List available priority codes |
 | `list_external_references` | List external references |
-| `create_external_reference` | Create an external reference |
-| `delete_external_reference` | Delete an external reference |
+| `create_external_reference` | ⚠️ **Experimental** - Create an external reference |
+| `delete_external_reference` | ⚠️ **Experimental** - Delete an external reference |
 
 ### Documents API (OData)
 | Tool | Description |
 |------|-------------|
 | `list_documents` | List documents with filtering |
 | `get_document` | Get a single document |
-| `create_document` | Create a new document |
-| `update_document` | Update a document |
-| `delete_document` | Delete a document |
+| `create_document` | ⚠️ **Experimental** - Create a new document |
+| `update_document` | ⚠️ **Experimental** - Update a document |
+| `delete_document` | ⚠️ **Experimental** - Delete a document |
 | `list_document_types` | List available document types |
 | `list_document_statuses` | List available statuses |
 
@@ -163,11 +165,11 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 |------|-------------|
 | `list_tasks` | List tasks for a project |
 | `get_task` | Get task details |
-| `create_task` | Create a new task |
-| `update_task` | Update a task |
-| `delete_task` | Delete a task |
+| `create_task` | ⚠️ **Experimental** - Create a new task |
+| `update_task` | ⚠️ **Experimental** - Update a task |
+| `delete_task` | ⚠️ **Experimental** - Delete a task |
 | `list_task_comments` | List comments on a task |
-| `create_task_comment` | Add a comment to a task |
+| `create_task_comment` | ⚠️ **Experimental** - Add a comment to a task |
 | `list_task_references` | List task references |
 | `list_workstreams` | List workstreams |
 | `list_deliverables` | List deliverables |
@@ -177,7 +179,7 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 |------|-------------|
 | `list_projects` | List all projects |
 | `get_project` | Get project details |
-| `create_project` | Create a new project |
+| `create_project` | ⚠️ **Experimental** - Create a new project |
 | `list_project_timeboxes` | List sprints/timeboxes |
 | `list_project_teams` | List team members |
 | `list_programs` | List all programs |
@@ -188,22 +190,22 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 |------|-------------|
 | `list_testcases` | List manual test cases |
 | `get_testcase` | Get test case details |
-| `create_testcase` | Create a test case |
-| `update_testcase` | Update a test case |
-| `delete_testcase` | Delete a test case |
+| `create_testcase` | ⚠️ **Experimental** - Create a test case |
+| `update_testcase` | ⚠️ **Experimental** - Update a test case |
+| `delete_testcase` | ⚠️ **Experimental** - Delete a test case |
 | `list_test_activities` | List test activities |
-| `create_test_activity` | Create a test activity |
+| `create_test_activity` | ⚠️ **Experimental** - Create a test activity |
 | `list_test_actions` | List test actions |
-| `create_test_action` | Create a test action |
+| `create_test_action` | ⚠️ **Experimental** - Create a test action |
 
 ### Process Hierarchy API (OData)
 | Tool | Description |
 |------|-------------|
 | `list_hierarchy_nodes` | List process hierarchy nodes |
 | `get_hierarchy_node` | Get a hierarchy node |
-| `create_hierarchy_node` | Create a hierarchy node |
-| `update_hierarchy_node` | Update a hierarchy node |
-| `delete_hierarchy_node` | Delete a hierarchy node |
+| `create_hierarchy_node` | ⚠️ **Experimental** - Create a hierarchy node |
+| `update_hierarchy_node` | ⚠️ **Experimental** - Update a hierarchy node |
+| `delete_hierarchy_node` | ⚠️ **Experimental** - Delete a hierarchy node |
 
 ### Analytics API (OData)
 | Tool | Description |
@@ -222,7 +224,7 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 | Tool | Description |
 |------|-------------|
 | `get_logs` | Get logs (OpenTelemetry format) |
-| `post_logs` | Post logs |
+| `post_logs` | ⚠️ **Experimental** - Post logs |
 
 ## Example Usage with Claude
 
@@ -307,3 +309,17 @@ Contributions are welcome! Please ensure your code:
 - Builds without errors (`cargo build`)
 - Passes all tests (`cargo test`)
 - Follows Rust conventions (`cargo fmt` and `cargo clippy`)
+
+## Disclaimer
+
+This software is provided "as is", without warranty of any kind, express or implied.
+
+### No Responsibility
+
+The author(s) and contributor(s) of this tool assume no responsibility or liability for any damages, losses, or consequences that may result from the use or misuse of this software. This includes, but is not limited to:
+
+- Any kind of data loss
+- Any damage to systems, networks, or data
+- Any legal consequences resulting from unauthorized or improper use
+- Any business losses or operational disruptions
+- Any security incidents or breaches

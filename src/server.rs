@@ -554,7 +554,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new feature. Required: title and project_id.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new feature. Requires user confirmation before execution. Required: title and project_id.")]
     async fn create_feature(&self, Parameters(params): Parameters<CreateFeatureParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_feature", &json!(params));
 
@@ -577,7 +577,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Update an existing feature. Only provided fields will be updated.")]
+    #[tool(description = "[EXPERIMENTAL] Update an existing feature. Requires user confirmation before execution. Only provided fields will be updated.")]
     async fn update_feature(&self, Parameters(params): Parameters<UpdateFeatureParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_feature", &json!(params));
 
@@ -599,7 +599,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete a feature by UUID.")]
+    #[tool(description = "[EXPERIMENTAL] Delete a feature by UUID. Requires user confirmation before execution.")]
     async fn delete_feature(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_feature", &json!({"uuid": params.uuid}));
 
@@ -633,7 +633,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create an external reference for a feature.")]
+    #[tool(description = "[EXPERIMENTAL] Create an external reference for a feature. Requires user confirmation before execution.")]
     async fn create_external_reference(&self, Parameters(params): Parameters<CreateExternalReferenceParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_external_reference", &json!(params));
 
@@ -653,7 +653,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete an external reference.")]
+    #[tool(description = "[EXPERIMENTAL] Delete an external reference. Requires user confirmation before execution.")]
     async fn delete_external_reference(&self, Parameters(params): Parameters<DeleteExternalReferenceParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_external_reference", &json!(params));
 
@@ -730,7 +730,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new document. Required: title.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new document. Requires user confirmation before execution. Required: title.")]
     async fn create_document(&self, Parameters(params): Parameters<CreateDocumentParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_document", &json!(params));
 
@@ -752,7 +752,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Update an existing document.")]
+    #[tool(description = "[EXPERIMENTAL] Update an existing document. Requires user confirmation before execution.")]
     async fn update_document(&self, Parameters(params): Parameters<UpdateDocumentParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_document", &json!(params));
 
@@ -773,7 +773,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete a document by UUID.")]
+    #[tool(description = "[EXPERIMENTAL] Delete a document by UUID. Requires user confirmation before execution.")]
     async fn delete_document(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_document", &json!({"uuid": params.uuid}));
 
@@ -856,7 +856,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new task. Required: project_id, title, task_type.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new task. Requires user confirmation before execution. Required: project_id, title, task_type.")]
     async fn create_task(&self, Parameters(params): Parameters<CreateTaskParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_task", &json!(params));
 
@@ -879,7 +879,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Update an existing task.")]
+    #[tool(description = "[EXPERIMENTAL] Update an existing task. Requires user confirmation before execution.")]
     async fn update_task(&self, Parameters(params): Parameters<UpdateTaskParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_task", &json!(params));
 
@@ -901,7 +901,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete a task by UUID.")]
+    #[tool(description = "[EXPERIMENTAL] Delete a task by UUID. Requires user confirmation before execution.")]
     async fn delete_task(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_task", &json!({"uuid": params.uuid}));
 
@@ -926,7 +926,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Add a comment to a task.")]
+    #[tool(description = "[EXPERIMENTAL] Add a comment to a task. Requires user confirmation before execution.")]
     async fn create_task_comment(&self, Parameters(params): Parameters<CreateTaskCommentParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_task_comment", &json!(params));
 
@@ -1012,7 +1012,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new project.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new project. Requires user confirmation before execution.")]
     async fn create_project(&self, Parameters(params): Parameters<CreateProjectParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_project", &json!(params));
 
@@ -1122,7 +1122,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new manual test case.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new manual test case. Requires user confirmation before execution.")]
     async fn create_testcase(&self, Parameters(params): Parameters<CreateTestcaseParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_testcase", &json!(params));
 
@@ -1141,7 +1141,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Update an existing test case.")]
+    #[tool(description = "[EXPERIMENTAL] Update an existing test case. Requires user confirmation before execution.")]
     async fn update_testcase(&self, Parameters(params): Parameters<UpdateTestcaseParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_testcase", &json!(params));
 
@@ -1160,7 +1160,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete a test case by UUID.")]
+    #[tool(description = "[EXPERIMENTAL] Delete a test case by UUID. Requires user confirmation before execution.")]
     async fn delete_testcase(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_testcase", &json!({"uuid": params.uuid}));
 
@@ -1194,7 +1194,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a test activity for a test case.")]
+    #[tool(description = "[EXPERIMENTAL] Create a test activity for a test case. Requires user confirmation before execution.")]
     async fn create_test_activity(&self, Parameters(params): Parameters<CreateTestActivityParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_test_activity", &json!(params));
 
@@ -1236,7 +1236,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a test action for an activity.")]
+    #[tool(description = "[EXPERIMENTAL] Create a test action for an activity. Requires user confirmation before execution.")]
     async fn create_test_action(&self, Parameters(params): Parameters<CreateTestActionParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_test_action", &json!(params));
 
@@ -1302,7 +1302,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Create a new hierarchy node. Required: title.")]
+    #[tool(description = "[EXPERIMENTAL] Create a new hierarchy node. Requires user confirmation before execution. Required: title.")]
     async fn create_hierarchy_node(&self, Parameters(params): Parameters<CreateHierarchyNodeParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_hierarchy_node", &json!(params));
 
@@ -1322,7 +1322,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Update an existing hierarchy node.")]
+    #[tool(description = "[EXPERIMENTAL] Update an existing hierarchy node. Requires user confirmation before execution.")]
     async fn update_hierarchy_node(&self, Parameters(params): Parameters<UpdateHierarchyNodeParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_hierarchy_node", &json!(params));
 
@@ -1341,7 +1341,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
     }
 
-    #[tool(description = "Delete a hierarchy node by UUID.")]
+    #[tool(description = "[EXPERIMENTAL] Delete a hierarchy node by UUID. Requires user confirmation before execution.")]
     async fn delete_hierarchy_node(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_hierarchy_node", &json!({"uuid": params.uuid}));
 
@@ -1541,7 +1541,7 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }
 
-    #[tool(description = "Post logs (inbound) in OpenTelemetry format. Required: use_case, service_id, logs.")]
+    #[tool(description = "[EXPERIMENTAL] Post logs (inbound) in OpenTelemetry format. Requires user confirmation before execution. Required: use_case, service_id, logs.")]
     async fn post_logs(&self, Parameters(params): Parameters<PostLogsToolParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("post_logs", &json!({"use_case": params.use_case, "service_id": params.service_id}));
 
