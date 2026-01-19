@@ -31,45 +31,32 @@ use crate::api::testmanagement::{
 use crate::debug::DebugLogger;
 use crate::odata::ODataQuery;
 
+/// Container for all SAP Cloud ALM API clients.
+#[derive(Clone)]
+pub struct ApiClients {
+    pub features: FeaturesClient,
+    pub documents: DocumentsClient,
+    pub tasks: TasksClient,
+    pub projects: ProjectsClient,
+    pub testmanagement: TestManagementClient,
+    pub processhierarchy: ProcessHierarchyClient,
+    pub analytics: AnalyticsClient,
+    pub processmonitoring: ProcessMonitoringClient,
+    pub logs: LogsClient,
+}
+
 /// SAP Cloud ALM MCP Server.
 #[derive(Clone)]
 pub struct SapCloudAlmServer {
-    features_client: FeaturesClient,
-    documents_client: DocumentsClient,
-    tasks_client: TasksClient,
-    projects_client: ProjectsClient,
-    testmanagement_client: TestManagementClient,
-    processhierarchy_client: ProcessHierarchyClient,
-    analytics_client: AnalyticsClient,
-    processmonitoring_client: ProcessMonitoringClient,
-    logs_client: LogsClient,
+    clients: ApiClients,
     debug: Arc<DebugLogger>,
     tool_router: ToolRouter<Self>,
 }
 
 impl SapCloudAlmServer {
-    pub fn new(
-        features_client: FeaturesClient,
-        documents_client: DocumentsClient,
-        tasks_client: TasksClient,
-        projects_client: ProjectsClient,
-        testmanagement_client: TestManagementClient,
-        processhierarchy_client: ProcessHierarchyClient,
-        analytics_client: AnalyticsClient,
-        processmonitoring_client: ProcessMonitoringClient,
-        logs_client: LogsClient,
-        debug: Arc<DebugLogger>,
-    ) -> Self {
+    pub fn new(clients: ApiClients, debug: Arc<DebugLogger>) -> Self {
         Self {
-            features_client,
-            documents_client,
-            tasks_client,
-            projects_client,
-            testmanagement_client,
-            processhierarchy_client,
-            analytics_client,
-            processmonitoring_client,
-            logs_client,
+            clients,
             debug,
             tool_router: Self::tool_router(),
         }
@@ -540,7 +527,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.features_client.list_features(query).await
+        let result = self.clients.features.list_features(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -555,9 +542,9 @@ impl SapCloudAlmServer {
 
         let result = if let Some(ref expand) = params.expand {
             let expand_list: Vec<&str> = expand.split(',').map(|s: &str| s.trim()).collect();
-            self.features_client.get_feature_with_expand(&params.uuid, &expand_list).await
+            self.clients.features.get_feature_with_expand(&params.uuid, &expand_list).await
         } else {
-            self.features_client.get_feature(&params.uuid).await
+            self.clients.features.get_feature(&params.uuid).await
                 .map(|f| serde_json::to_value(f).unwrap())
         };
 
@@ -581,7 +568,7 @@ impl SapCloudAlmServer {
             scope_id: params.scope_id,
         };
 
-        let result = self.features_client.create_feature(&request).await
+        let result = self.clients.features.create_feature(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -603,7 +590,7 @@ impl SapCloudAlmServer {
             scope_id: None,
         };
 
-        let result = self.features_client.update_feature(&params.uuid, &request).await
+        let result = self.clients.features.update_feature(&params.uuid, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -616,7 +603,7 @@ impl SapCloudAlmServer {
     async fn delete_feature(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_feature", &json!({"uuid": params.uuid}));
 
-        self.features_client.delete_feature(&params.uuid).await
+        self.clients.features.delete_feature(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_feature", &json!({"deleted": true}));
@@ -637,7 +624,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.features_client.list_external_references(query).await
+        let result = self.clients.features.list_external_references(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -657,7 +644,7 @@ impl SapCloudAlmServer {
             url: Some(params.url),
         };
 
-        let result = self.features_client.create_external_reference(&request).await
+        let result = self.clients.features.create_external_reference(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -670,7 +657,7 @@ impl SapCloudAlmServer {
     async fn delete_external_reference(&self, Parameters(params): Parameters<DeleteExternalReferenceParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_external_reference", &json!(params));
 
-        self.features_client.delete_external_reference(&params.id, &params.parent_uuid).await
+        self.clients.features.delete_external_reference(&params.id, &params.parent_uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_external_reference", &json!({"deleted": true}));
@@ -682,7 +669,7 @@ impl SapCloudAlmServer {
     async fn list_feature_priorities(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_feature_priorities", &json!({}));
 
-        let result = self.features_client.list_priorities().await
+        let result = self.clients.features.list_priorities().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -695,7 +682,7 @@ impl SapCloudAlmServer {
     async fn list_feature_statuses(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_feature_statuses", &json!({}));
 
-        let result = self.features_client.list_statuses().await
+        let result = self.clients.features.list_statuses().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -721,7 +708,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.documents_client.list_documents(query).await
+        let result = self.clients.documents.list_documents(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -734,7 +721,7 @@ impl SapCloudAlmServer {
     async fn get_document(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_document", &json!({"uuid": params.uuid}));
 
-        let result = self.documents_client.get_document(&params.uuid).await
+        let result = self.clients.documents.get_document(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -756,7 +743,7 @@ impl SapCloudAlmServer {
             priority_code: None,
         };
 
-        let result = self.documents_client.create_document(&request).await
+        let result = self.clients.documents.create_document(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -777,7 +764,7 @@ impl SapCloudAlmServer {
             type_code: None,
         };
 
-        let result = self.documents_client.update_document(&params.uuid, &request).await
+        let result = self.clients.documents.update_document(&params.uuid, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -790,7 +777,7 @@ impl SapCloudAlmServer {
     async fn delete_document(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_document", &json!({"uuid": params.uuid}));
 
-        self.documents_client.delete_document(&params.uuid).await
+        self.clients.documents.delete_document(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_document", &json!({"deleted": true}));
@@ -802,7 +789,7 @@ impl SapCloudAlmServer {
     async fn list_document_types(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_document_types", &json!({}));
 
-        let result = self.documents_client.list_types().await
+        let result = self.clients.documents.list_types().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -815,7 +802,7 @@ impl SapCloudAlmServer {
     async fn list_document_statuses(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_document_statuses", &json!({}));
 
-        let result = self.documents_client.list_statuses().await
+        let result = self.clients.documents.list_statuses().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -847,7 +834,7 @@ impl SapCloudAlmServer {
             ..Default::default()
         };
 
-        let result = self.tasks_client.list_tasks(&list_params).await
+        let result = self.clients.tasks.list_tasks(&list_params).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -860,7 +847,7 @@ impl SapCloudAlmServer {
     async fn get_task(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_task", &json!({"uuid": params.uuid}));
 
-        let result = self.tasks_client.get_task(&params.uuid).await
+        let result = self.clients.tasks.get_task(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -883,7 +870,7 @@ impl SapCloudAlmServer {
             due_date: params.due_date,
         };
 
-        let result = self.tasks_client.create_task(&request).await
+        let result = self.clients.tasks.create_task(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -905,7 +892,7 @@ impl SapCloudAlmServer {
             due_date: None,
         };
 
-        let result = self.tasks_client.update_task(&params.uuid, &request).await
+        let result = self.clients.tasks.update_task(&params.uuid, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -918,7 +905,7 @@ impl SapCloudAlmServer {
     async fn delete_task(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_task", &json!({"uuid": params.uuid}));
 
-        self.tasks_client.delete_task(&params.uuid).await
+        self.clients.tasks.delete_task(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_task", &json!({"deleted": true}));
@@ -930,7 +917,7 @@ impl SapCloudAlmServer {
     async fn list_task_comments(&self, Parameters(params): Parameters<TaskIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_task_comments", &json!({"task_id": params.task_id}));
 
-        let result = self.tasks_client.list_task_comments(&params.task_id).await
+        let result = self.clients.tasks.list_task_comments(&params.task_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -947,7 +934,7 @@ impl SapCloudAlmServer {
             content: params.content,
         };
 
-        let result = self.tasks_client.create_task_comment(&params.task_id, &request).await
+        let result = self.clients.tasks.create_task_comment(&params.task_id, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -960,7 +947,7 @@ impl SapCloudAlmServer {
     async fn list_task_references(&self, Parameters(params): Parameters<TaskIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_task_references", &json!({"task_id": params.task_id}));
 
-        let result = self.tasks_client.list_task_references(&params.task_id).await
+        let result = self.clients.tasks.list_task_references(&params.task_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -973,7 +960,7 @@ impl SapCloudAlmServer {
     async fn list_workstreams(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_workstreams", &json!({"project_id": params.project_id}));
 
-        let result = self.tasks_client.list_workstreams(&params.project_id).await
+        let result = self.clients.tasks.list_workstreams(&params.project_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -986,7 +973,7 @@ impl SapCloudAlmServer {
     async fn list_deliverables(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_deliverables", &json!({"project_id": params.project_id}));
 
-        let result = self.tasks_client.list_deliverables(&params.project_id).await
+        let result = self.clients.tasks.list_deliverables(&params.project_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1003,7 +990,7 @@ impl SapCloudAlmServer {
     async fn list_projects(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_projects", &json!({}));
 
-        let result = self.projects_client.list_projects().await
+        let result = self.clients.projects.list_projects().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1016,7 +1003,7 @@ impl SapCloudAlmServer {
     async fn get_project(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_project", &json!({"id": params.id}));
 
-        let result = self.projects_client.get_project(&params.id).await
+        let result = self.clients.projects.get_project(&params.id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1035,7 +1022,7 @@ impl SapCloudAlmServer {
             program_id: params.program_id,
         };
 
-        let result = self.projects_client.create_project(&request).await
+        let result = self.clients.projects.create_project(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1048,7 +1035,7 @@ impl SapCloudAlmServer {
     async fn list_project_timeboxes(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_project_timeboxes", &json!({"project_id": params.project_id}));
 
-        let result = self.projects_client.list_timeboxes(&params.project_id).await
+        let result = self.clients.projects.list_timeboxes(&params.project_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1061,7 +1048,7 @@ impl SapCloudAlmServer {
     async fn list_project_teams(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_project_teams", &json!({"project_id": params.project_id}));
 
-        let result = self.projects_client.list_team_members(&params.project_id).await
+        let result = self.clients.projects.list_team_members(&params.project_id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1074,7 +1061,7 @@ impl SapCloudAlmServer {
     async fn list_programs(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_programs", &json!({}));
 
-        let result = self.projects_client.list_programs().await
+        let result = self.clients.projects.list_programs().await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1087,7 +1074,7 @@ impl SapCloudAlmServer {
     async fn get_program(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_program", &json!({"id": params.id}));
 
-        let result = self.projects_client.get_program(&params.id).await
+        let result = self.clients.projects.get_program(&params.id).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1113,7 +1100,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.testmanagement_client.list_testcases(query).await
+        let result = self.clients.testmanagement.list_testcases(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1126,7 +1113,7 @@ impl SapCloudAlmServer {
     async fn get_testcase(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_testcase", &json!({"uuid": params.uuid}));
 
-        let result = self.testmanagement_client.get_testcase(&params.uuid).await
+        let result = self.clients.testmanagement.get_testcase(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1145,7 +1132,7 @@ impl SapCloudAlmServer {
             project_id: params.project_id,
         };
 
-        let result = self.testmanagement_client.create_testcase(&request).await
+        let result = self.clients.testmanagement.create_testcase(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1164,7 +1151,7 @@ impl SapCloudAlmServer {
             status_code: params.status_code,
         };
 
-        let result = self.testmanagement_client.update_testcase(&params.uuid, &request).await
+        let result = self.clients.testmanagement.update_testcase(&params.uuid, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1177,7 +1164,7 @@ impl SapCloudAlmServer {
     async fn delete_testcase(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_testcase", &json!({"uuid": params.uuid}));
 
-        self.testmanagement_client.delete_testcase(&params.uuid).await
+        self.clients.testmanagement.delete_testcase(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_testcase", &json!({"deleted": true}));
@@ -1198,7 +1185,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.testmanagement_client.list_activities(query).await
+        let result = self.clients.testmanagement.list_activities(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1218,7 +1205,7 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.testmanagement_client.create_activity(&request).await
+        let result = self.clients.testmanagement.create_activity(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1240,7 +1227,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.testmanagement_client.list_actions(query).await
+        let result = self.clients.testmanagement.list_actions(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1262,7 +1249,7 @@ impl SapCloudAlmServer {
             is_evidence_required: params.is_evidence_required,
         };
 
-        let result = self.testmanagement_client.create_action(&request).await
+        let result = self.clients.testmanagement.create_action(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1288,7 +1275,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.processhierarchy_client.list_nodes(query).await
+        let result = self.clients.processhierarchy.list_nodes(query).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1303,9 +1290,9 @@ impl SapCloudAlmServer {
 
         let result = if let Some(ref expand) = params.expand {
             let expand_list: Vec<&str> = expand.split(',').map(|s: &str| s.trim()).collect();
-            self.processhierarchy_client.get_node_with_expand(&params.uuid, &expand_list).await
+            self.clients.processhierarchy.get_node_with_expand(&params.uuid, &expand_list).await
         } else {
-            self.processhierarchy_client.get_node(&params.uuid).await
+            self.clients.processhierarchy.get_node(&params.uuid).await
                 .map(|n| serde_json::to_value(n).unwrap())
         };
 
@@ -1326,7 +1313,7 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.processhierarchy_client.create_node(&request).await
+        let result = self.clients.processhierarchy.create_node(&request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1345,7 +1332,7 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.processhierarchy_client.update_node(&params.uuid, &request).await
+        let result = self.clients.processhierarchy.update_node(&params.uuid, &request).await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1358,7 +1345,7 @@ impl SapCloudAlmServer {
     async fn delete_hierarchy_node(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("delete_hierarchy_node", &json!({"uuid": params.uuid}));
 
-        self.processhierarchy_client.delete_node(&params.uuid).await
+        self.clients.processhierarchy.delete_node(&params.uuid).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("delete_hierarchy_node", &json!({"deleted": true}));
@@ -1383,7 +1370,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.analytics_client.query_dataset(&params.provider, query).await
+        let result = self.clients.analytics.query_dataset(&params.provider, query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("query_analytics_dataset", &result);
@@ -1395,7 +1382,7 @@ impl SapCloudAlmServer {
     async fn list_analytics_providers(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_analytics_providers", &json!({}));
 
-        let result = self.analytics_client.list_providers().await
+        let result = self.clients.analytics.list_providers().await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("list_analytics_providers", &result);
@@ -1416,7 +1403,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.analytics_client.get_requirements(query).await
+        let result = self.clients.analytics.get_requirements(query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_requirements", &result);
@@ -1437,7 +1424,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.analytics_client.get_tasks_analytics(query).await
+        let result = self.clients.analytics.get_tasks_analytics(query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_tasks", &result);
@@ -1458,7 +1445,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.analytics_client.get_alerts(query).await
+        let result = self.clients.analytics.get_alerts(query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_alerts", &result);
@@ -1483,7 +1470,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.processmonitoring_client.list_events(query).await
+        let result = self.clients.processmonitoring.list_events(query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("list_monitoring_events", &result);
@@ -1495,7 +1482,7 @@ impl SapCloudAlmServer {
     async fn get_monitoring_event(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_monitoring_event", &json!({"id": params.id}));
 
-        let result = self.processmonitoring_client.get_event(&params.id).await
+        let result = self.clients.processmonitoring.get_event(&params.id).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_monitoring_event", &result);
@@ -1516,7 +1503,7 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.processmonitoring_client.list_services(query).await
+        let result = self.clients.processmonitoring.list_services(query).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("list_monitoring_services", &result);
@@ -1546,7 +1533,7 @@ impl SapCloudAlmServer {
             on_limit: None,
         };
 
-        let result = self.logs_client.get_logs(&log_params).await
+        let result = self.clients.logs.get_logs(&log_params).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_logs", &result);
@@ -1566,7 +1553,7 @@ impl SapCloudAlmServer {
             tag: params.tag,
         };
 
-        let result = self.logs_client.post_logs(&log_params, &params.logs).await
+        let result = self.clients.logs.post_logs(&log_params, &params.logs).await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("post_logs", &result);

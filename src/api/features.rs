@@ -38,16 +38,6 @@ pub struct ExternalReference {
     pub url: Option<String>,
 }
 
-/// Transport entity.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Transport {
-    pub uuid: Option<String>,
-    pub transport_request: Option<String>,
-    pub status: Option<String>,
-    pub feature_uuid: Option<String>,
-}
-
 /// Priority code entity.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PriorityCode {
@@ -206,25 +196,6 @@ impl FeaturesClient {
         self.odata_client
             .delete_entity_by_uuid(&endpoint, "")
             .await
-    }
-
-    /// List transports with optional query.
-    pub async fn list_transports(
-        &self,
-        query: Option<ODataQuery>,
-    ) -> Result<ODataCollection<Transport>, ApiError> {
-        self.odata_client
-            .get_collection("/Transports", query)
-            .await
-    }
-
-    /// Get transports for a feature.
-    pub async fn get_feature_transports(
-        &self,
-        feature_uuid: &str,
-    ) -> Result<ODataCollection<Transport>, ApiError> {
-        let query = ODataQuery::new().filter(format!("featureUuid eq '{}'", feature_uuid));
-        self.list_transports(Some(query)).await
     }
 
     /// List priority codes.

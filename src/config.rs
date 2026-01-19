@@ -141,11 +141,6 @@ impl Config {
         }
     }
 
-    /// Check if running in sandbox mode.
-    pub fn is_sandbox(&self) -> bool {
-        self.sandbox
-    }
-
     /// Get the API path prefix.
     /// Sandbox mode uses direct paths, OAuth2 mode uses /api prefix.
     fn api_path_prefix(&self) -> &'static str {

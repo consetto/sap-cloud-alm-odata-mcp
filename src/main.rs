@@ -23,7 +23,7 @@ use crate::auth::OAuth2Client;
 use crate::config::Config;
 use crate::debug::DebugLogger;
 use crate::odata::ODataClient;
-use crate::server::SapCloudAlmServer;
+use crate::server::{ApiClients, SapCloudAlmServer};
 
 #[derive(Parser, Debug)]
 #[command(name = "sap-cloud-alm-mcp")]
@@ -132,18 +132,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Create MCP server
-    let server = SapCloudAlmServer::new(
-        features_client,
-        documents_client,
-        tasks_client,
-        projects_client,
-        testmanagement_client,
-        processhierarchy_client,
-        analytics_client,
-        processmonitoring_client,
-        logs_client,
-        debug.clone(),
-    );
+    let clients = ApiClients {
+        features: features_client,
+        documents: documents_client,
+        tasks: tasks_client,
+        projects: projects_client,
+        testmanagement: testmanagement_client,
+        processhierarchy: processhierarchy_client,
+        analytics: analytics_client,
+        processmonitoring: processmonitoring_client,
+        logs: logs_client,
+    };
+
+    let server = SapCloudAlmServer::new(clients, debug.clone());
 
     if debug_enabled {
         debug.log("All API clients initialized");

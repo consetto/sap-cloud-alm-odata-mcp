@@ -45,11 +45,6 @@ impl DebugLogger {
         }
     }
 
-    /// Check if debug mode is enabled.
-    pub fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     /// Get the trace file path.
     pub fn trace_path(&self) -> Option<&PathBuf> {
         self.trace_path.as_ref()
@@ -72,32 +67,6 @@ impl DebugLogger {
                 let _ = f.flush();
             }
         }
-    }
-
-    /// Log an incoming MCP message.
-    pub fn log_incoming(&self, method: &str, params: Option<&serde_json::Value>) {
-        if !self.enabled {
-            return;
-        }
-
-        let params_str = params
-            .map(|p| truncate_json(p, 500))
-            .unwrap_or_else(|| "null".to_string());
-
-        self.log(&format!(">>> RECV: {} | params: {}", method, params_str));
-    }
-
-    /// Log an outgoing MCP message.
-    pub fn log_outgoing(&self, method: &str, result: Option<&serde_json::Value>) {
-        if !self.enabled {
-            return;
-        }
-
-        let result_str = result
-            .map(|r| truncate_json(r, 500))
-            .unwrap_or_else(|| "null".to_string());
-
-        self.log(&format!("<<< SEND: {} | result: {}", method, result_str));
     }
 
     /// Log a tool call.
@@ -124,37 +93,6 @@ impl DebugLogger {
             tool_name,
             truncate_json(result, 1000)
         ));
-    }
-
-    /// Log an error.
-    pub fn log_error(&self, context: &str, error: &str) {
-        if !self.enabled {
-            return;
-        }
-
-        self.log(&format!("ERROR [{}]: {}", context, error));
-    }
-
-    /// Log an API request.
-    pub fn log_api_request(&self, method: &str, url: &str) {
-        if !self.enabled {
-            return;
-        }
-
-        self.log(&format!("API REQUEST: {} {}", method, url));
-    }
-
-    /// Log an API response.
-    pub fn log_api_response(&self, status: u16, body: Option<&serde_json::Value>) {
-        if !self.enabled {
-            return;
-        }
-
-        let body_str = body
-            .map(|b| truncate_json(b, 500))
-            .unwrap_or_else(|| "(no body)".to_string());
-
-        self.log(&format!("API RESPONSE: {} | body: {}", status, body_str));
     }
 }
 

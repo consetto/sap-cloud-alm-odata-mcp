@@ -152,20 +152,6 @@ impl OAuth2Client {
         Ok(token_response.access_token)
     }
 
-    /// Invalidate the cached token (for handling 401 responses).
-    pub async fn invalidate_token(&self) {
-        let mut cache = self.token_cache.write().await;
-        *cache = None;
-        if self.config.debug {
-            eprintln!("[AUTH] Token invalidated");
-        }
-    }
-
-    /// Check if we have a cached token (may be expired).
-    pub async fn has_cached_token(&self) -> bool {
-        let cache = self.token_cache.read().await;
-        cache.is_some()
-    }
 }
 
 impl std::fmt::Debug for OAuth2Client {

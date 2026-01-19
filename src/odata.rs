@@ -71,18 +71,6 @@ impl ODataQuery {
         self
     }
 
-    /// Enable $count.
-    pub fn count(mut self) -> Self {
-        self.count = true;
-        self
-    }
-
-    /// Add $search term.
-    pub fn search(mut self, term: impl Into<String>) -> Self {
-        self.search = Some(term.into());
-        self
-    }
-
     /// Build query string for URL.
     pub fn to_query_string(&self) -> String {
         let mut params = Vec::new();
@@ -163,14 +151,16 @@ pub struct ODataErrorDetail {
     pub code: String,
     pub message: String,
     #[serde(default)]
-    pub details: Vec<ODataErrorItem>,
+    #[allow(dead_code)]
+    details: Vec<ODataErrorItem>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ODataErrorItem {
-    pub code: Option<String>,
-    pub message: String,
-    pub target: Option<String>,
+#[allow(dead_code)]
+struct ODataErrorItem {
+    code: Option<String>,
+    message: String,
+    target: Option<String>,
 }
 
 /// OData v4 client for SAP Cloud ALM APIs.
@@ -243,16 +233,6 @@ impl ODataClient {
         self.execute_get(&url).await
     }
 
-    /// GET single entity by key.
-    pub async fn get_entity<T: DeserializeOwned>(
-        &self,
-        endpoint: &str,
-        key: &str,
-    ) -> Result<T, ApiError> {
-        let url = format!("{}{}('{}')", self.base_url, endpoint, key);
-        self.execute_get(&url).await
-    }
-
     /// GET single entity by UUID key.
     pub async fn get_entity_by_uuid<T: DeserializeOwned>(
         &self,
@@ -289,27 +269,6 @@ impl ODataClient {
         self.execute_post(&url, body).await
     }
 
-    /// POST create entity, return raw JSON.
-    pub async fn create_entity_raw<B: Serialize>(
-        &self,
-        endpoint: &str,
-        body: &B,
-    ) -> Result<Value, ApiError> {
-        let url = format!("{}{}", self.base_url, endpoint);
-        self.execute_post(&url, body).await
-    }
-
-    /// PATCH update entity.
-    pub async fn update_entity<T: DeserializeOwned, B: Serialize>(
-        &self,
-        endpoint: &str,
-        key: &str,
-        body: &B,
-    ) -> Result<T, ApiError> {
-        let url = format!("{}{}('{}')", self.base_url, endpoint, key);
-        self.execute_patch(&url, body).await
-    }
-
     /// PATCH update entity by UUID.
     pub async fn update_entity_by_uuid<T: DeserializeOwned, B: Serialize>(
         &self,
@@ -319,12 +278,6 @@ impl ODataClient {
     ) -> Result<T, ApiError> {
         let url = format!("{}{}/{}", self.base_url, endpoint, uuid);
         self.execute_patch(&url, body).await
-    }
-
-    /// DELETE entity.
-    pub async fn delete_entity(&self, endpoint: &str, key: &str) -> Result<(), ApiError> {
-        let url = format!("{}{}('{}')", self.base_url, endpoint, key);
-        self.execute_delete(&url).await
     }
 
     /// DELETE entity by UUID.

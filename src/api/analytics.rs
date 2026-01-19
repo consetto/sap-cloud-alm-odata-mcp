@@ -1,20 +1,9 @@
 //! Analytics API client (OData v4) - CALM_ANALYTICS_ODATA.
 
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::ApiError;
 use crate::odata::{ODataClient, ODataQuery};
-
-/// Analytics data provider info.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DataProvider {
-    pub name: Option<String>,
-    pub description: Option<String>,
-    pub dimensions: Option<Vec<String>>,
-    pub metrics: Option<Vec<String>>,
-}
 
 /// Analytics API client.
 #[derive(Clone)]

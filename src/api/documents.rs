@@ -1,7 +1,6 @@
 //! Documents API client (OData v4) - CALM_SD.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::error::ApiError;
 use crate::odata::{ODataClient, ODataCollection, ODataQuery};
@@ -38,13 +37,6 @@ pub struct DocumentType {
 /// Document status code.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DocumentStatus {
-    pub code: String,
-    pub name: String,
-}
-
-/// Document priority code.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DocumentPriority {
     pub code: String,
     pub name: String,
 }
@@ -111,17 +103,6 @@ impl DocumentsClient {
             .await
     }
 
-    /// Get a document with expanded relations.
-    pub async fn get_document_with_expand(
-        &self,
-        uuid: &str,
-        expand: &[&str],
-    ) -> Result<Value, ApiError> {
-        self.odata_client
-            .get_entity_with_expand("/Documents", uuid, expand)
-            .await
-    }
-
     /// Create a new document.
     pub async fn create_document(
         &self,
@@ -161,13 +142,6 @@ impl DocumentsClient {
     pub async fn list_statuses(&self) -> Result<ODataCollection<DocumentStatus>, ApiError> {
         self.odata_client
             .get_collection("/DocumentStatuses", None)
-            .await
-    }
-
-    /// List document priorities.
-    pub async fn list_priorities(&self) -> Result<ODataCollection<DocumentPriority>, ApiError> {
-        self.odata_client
-            .get_collection("/DocumentPriorities", None)
             .await
     }
 }
