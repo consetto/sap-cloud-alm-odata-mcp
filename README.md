@@ -24,8 +24,9 @@ A Model Context Protocol (MCP) server that bridges SAP Cloud ALM APIs to AI assi
 ### Build from Source
 
 ```bash
-# Clone or navigate to the project directory
-cd sap-cloud-alm-mcp
+# Clone and navigate to the project directory
+git clone https://github.com/consetto/sap-cloud-alm-odata-mcp.git
+cd sap-cloud-alm-odata-mcp
 
 # Build the release binary
 cargo build --release
