@@ -183,7 +183,7 @@ impl Config {
 
     /// Get the Analytics API URL.
     pub fn analytics_api_url(&self) -> String {
-        format!("{}{}/calm-analytics/v1", self.api_base_url(), self.api_path_prefix())
+        format!("{}{}/calm-analytics/v1/odata/v4/analytics", self.api_base_url(), self.api_path_prefix())
     }
 
     /// Get the Process Monitoring API URL.
