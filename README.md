@@ -8,7 +8,7 @@ A Model Context Protocol (MCP) server that bridges SAP Cloud ALM APIs to AI assi
 - **Two Authentication Modes**:
   - OAuth2 client credentials for production environments
   - Static API key for SAP API Business Hub sandbox testing
-- **60+ MCP Tools**: Comprehensive toolset for CRUD operations across all supported APIs
+- **75+ MCP Tools**: Comprehensive toolset for CRUD operations across all supported APIs
 - **OData v4 Support**: Full query builder with $filter, $select, $expand, $orderby, $top, $skip
 - **Debug Mode**: Detailed logging for troubleshooting
 
@@ -210,8 +210,26 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 ### Analytics API (OData)
 | Tool | Description |
 |------|-------------|
-| `query_analytics` | Query analytics datasets |
-| `list_analytics_providers` | List data providers |
+| `query_analytics_dataset` | Query a generic analytics dataset by provider name |
+| `list_analytics_providers` | List available data providers |
+| `get_analytics_requirements` | Get requirements analytics data |
+| `get_analytics_tasks` | Get tasks analytics data |
+| `get_analytics_alerts` | Get alerts analytics data |
+| `get_analytics_defects` | Get defects analytics data |
+| `get_analytics_features` | Get features analytics data |
+| `get_analytics_tests` | Get tests analytics data |
+| `get_analytics_quality_gates` | Get quality gates analytics data |
+| `get_analytics_projects` | Get projects analytics data |
+| `get_analytics_configuration_items` | Get configuration items analytics data |
+| `get_analytics_exceptions` | Get exceptions analytics data |
+| `get_analytics_jobs` | Get jobs analytics data |
+| `get_analytics_messages` | Get messages analytics data |
+| `get_analytics_metrics` | Get metrics analytics data |
+| `get_analytics_monitoring_events` | Get monitoring events analytics data |
+| `get_analytics_requests` | Get requests analytics data |
+| `get_analytics_scenario_executions` | Get scenario executions analytics data |
+| `get_analytics_service_levels` | Get service levels analytics data |
+| `get_analytics_status_events` | Get status events analytics data |
 
 ### Process Monitoring API (OData)
 | Tool | Description |

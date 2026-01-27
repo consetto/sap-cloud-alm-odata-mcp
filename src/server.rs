@@ -1453,6 +1453,321 @@ impl SapCloudAlmServer {
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }
 
+    #[tool(description = "Get defects analytics data.")]
+    async fn get_analytics_defects(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_defects", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_defects(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_defects", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get features analytics data.")]
+    async fn get_analytics_features(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_features", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_features(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_features", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get tests analytics data.")]
+    async fn get_analytics_tests(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_tests", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_tests(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_tests", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get quality gates analytics data.")]
+    async fn get_analytics_quality_gates(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_quality_gates", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_quality_gates(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_quality_gates", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get projects analytics data.")]
+    async fn get_analytics_projects(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_projects", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_projects(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_projects", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get configuration items analytics data.")]
+    async fn get_analytics_configuration_items(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_configuration_items", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_configuration_items(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_configuration_items", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get exceptions analytics data.")]
+    async fn get_analytics_exceptions(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_exceptions", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_exceptions(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_exceptions", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get jobs analytics data.")]
+    async fn get_analytics_jobs(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_jobs", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_jobs(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_jobs", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get messages analytics data.")]
+    async fn get_analytics_messages(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_messages", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_messages(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_messages", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get metrics analytics data.")]
+    async fn get_analytics_metrics(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_metrics", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_metrics(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_metrics", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get monitoring events analytics data.")]
+    async fn get_analytics_monitoring_events(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_monitoring_events", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_monitoring_events(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_monitoring_events", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get requests analytics data.")]
+    async fn get_analytics_requests(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_requests", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_requests(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_requests", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get scenario executions analytics data.")]
+    async fn get_analytics_scenario_executions(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_scenario_executions", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_scenario_executions(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_scenario_executions", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get service levels analytics data.")]
+    async fn get_analytics_service_levels(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_service_levels", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_service_levels(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_service_levels", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get status events analytics data.")]
+    async fn get_analytics_status_events(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_analytics_status_events", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.analytics.get_status_events(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_analytics_status_events", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
     // ========================================================================
     // Process Monitoring API Tools
     // ========================================================================
