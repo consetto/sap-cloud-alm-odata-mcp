@@ -1361,17 +1361,12 @@ impl SapCloudAlmServer {
     async fn query_analytics_dataset(&self, Parameters(params): Parameters<QueryDatasetParams>) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("query_analytics_dataset", &json!({"provider": params.provider}));
 
-        let query = build_odata_query(
+        let result = self.clients.analytics.query_dataset(
+            &params.provider,
             params.filter,
-            params.select,
-            None,
-            params.orderby,
             params.top,
             params.skip,
-        );
-
-        let result = self.clients.analytics.query_dataset(&params.provider, query).await
-            .map_err(to_mcp_error)?;
+        ).await.map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("query_analytics_dataset", &result);
 
@@ -1427,27 +1422,6 @@ impl SapCloudAlmServer {
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_tasks", &result);
-
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
-    }
-
-    #[tool(description = "Get alerts analytics data.")]
-    async fn get_analytics_alerts(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_alerts", &json!(params));
-
-        let query = build_odata_query(
-            params.filter,
-            params.select,
-            params.expand,
-            params.orderby,
-            params.top,
-            params.skip,
-        );
-
-        let result = self.clients.analytics.get_alerts(query).await
-            .map_err(to_mcp_error)?;
-
-        self.debug.log_tool_result("get_analytics_alerts", &result);
 
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }
@@ -1768,12 +1742,12 @@ impl SapCloudAlmServer {
     }
 
     // ========================================================================
-    // Process Monitoring API Tools
+    // Process Monitoring API Tools (CALM_PMGE)
     // ========================================================================
 
-    #[tool(description = "List process monitoring events with OData filtering.")]
-    async fn list_monitoring_events(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_monitoring_events", &json!(params));
+    #[tool(description = "List business processes with OData filtering.")]
+    async fn list_business_processes(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("list_business_processes", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1784,29 +1758,29 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_events(query).await
+        let result = self.clients.processmonitoring.list_business_processes(query).await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_monitoring_events", &result);
+        self.debug.log_tool_result("list_business_processes", &result);
 
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }
 
-    #[tool(description = "Get a monitoring event by ID.")]
-    async fn get_monitoring_event(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_monitoring_event", &json!({"id": params.id}));
+    #[tool(description = "Get a business process by ID.")]
+    async fn get_business_process(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_business_process", &json!({"id": params.id}));
 
-        let result = self.clients.processmonitoring.get_event(&params.id).await
+        let result = self.clients.processmonitoring.get_business_process(&params.id).await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_monitoring_event", &result);
+        self.debug.log_tool_result("get_business_process", &result);
 
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }
 
-    #[tool(description = "List monitored services with OData filtering.")]
-    async fn list_monitoring_services(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_monitoring_services", &json!(params));
+    #[tool(description = "List solution processes with OData filtering.")]
+    async fn list_solution_processes(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("list_solution_processes", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1817,10 +1791,85 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_services(query).await
+        let result = self.clients.processmonitoring.list_solution_processes(query).await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_monitoring_services", &result);
+        self.debug.log_tool_result("list_solution_processes", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "Get a solution process by ID.")]
+    async fn get_solution_process(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("get_solution_process", &json!({"id": params.id}));
+
+        let result = self.clients.processmonitoring.get_solution_process(&params.id).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("get_solution_process", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "List solution process flows with OData filtering.")]
+    async fn list_solution_process_flows(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("list_solution_process_flows", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.processmonitoring.list_solution_process_flows(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("list_solution_process_flows", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "List solution value flow diagrams with OData filtering.")]
+    async fn list_solution_value_flow_diagrams(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("list_solution_value_flow_diagrams", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.processmonitoring.list_solution_value_flow_diagrams(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("list_solution_value_flow_diagrams", &result);
+
+        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+    }
+
+    #[tool(description = "List process assets with OData filtering.")]
+    async fn list_process_assets(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call("list_process_assets", &json!(params));
+
+        let query = build_odata_query(
+            params.filter,
+            params.select,
+            params.expand,
+            params.orderby,
+            params.top,
+            params.skip,
+        );
+
+        let result = self.clients.processmonitoring.list_assets(query).await
+            .map_err(to_mcp_error)?;
+
+        self.debug.log_tool_result("list_process_assets", &result);
 
         Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
     }

@@ -17,9 +17,26 @@ impl AnalyticsClient {
     }
 
     /// Query a generic dataset by provider name.
-    pub async fn query_dataset(&self, provider: &str, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        let endpoint = format!("/DataSet('{}')", provider);
-        self.odata_client.get_collection_raw(&endpoint, query).await
+    /// The provider is passed as a $filter parameter: provider eq 'ProviderName'
+    pub async fn query_dataset(&self, provider: &str, additional_filter: Option<String>, top: Option<u32>, skip: Option<u32>) -> Result<Value, ApiError> {
+        let provider_filter = format!("provider eq '{}'", provider);
+
+        // Combine provider filter with any additional filter
+        let full_filter = match additional_filter {
+            Some(existing) => format!("{} and {}", provider_filter, existing),
+            None => provider_filter,
+        };
+
+        let mut query = ODataQuery::new().filter(full_filter);
+
+        if let Some(t) = top {
+            query = query.top(t);
+        }
+        if let Some(s) = skip {
+            query = query.skip(s);
+        }
+
+        self.odata_client.get_collection_raw("/DataSet", Some(query)).await
     }
 
     /// Get requirements analytics.
@@ -30,11 +47,6 @@ impl AnalyticsClient {
     /// Get tasks analytics.
     pub async fn get_tasks_analytics(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
         self.odata_client.get_collection_raw("/Tasks", query).await
-    }
-
-    /// Get alerts analytics.
-    pub async fn get_alerts(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Alerts", query).await
     }
 
     /// List available providers (static list based on available entity sets).
