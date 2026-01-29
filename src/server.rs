@@ -153,7 +153,7 @@ pub struct ListFeaturesParams {
     pub select: Option<String>,
     /// Comma-separated list of navigation properties to expand
     pub expand: Option<String>,
-    /// OData $orderby expression (e.g., "createdAt desc")
+    /// OData $orderby expression (e.g., "modifiedAt desc"). Defaults to "modifiedAt desc" if not specified.
     pub orderby: Option<String>,
     /// Maximum number of records to return
     pub top: Option<u32>,
@@ -539,11 +539,18 @@ impl SapCloudAlmServer {
     ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_features", &json!(params));
 
+        // Handle orderby: default to modifiedAt desc, auto-correct createdAt to modifiedAt
+        let orderby = match params.orderby {
+            None => Some("modifiedAt desc".to_string()),
+            Some(o) if o.contains("createdAt") => Some(o.replace("createdAt", "modifiedAt")),
+            Some(o) => Some(o),
+        };
+
         let query = build_odata_query(
             params.filter,
             params.select,
             params.expand,
-            params.orderby,
+            orderby,
             params.top,
             params.skip,
         );

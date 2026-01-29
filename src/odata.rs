@@ -258,7 +258,7 @@ impl ODataClient {
         } else {
             format!("?$expand={}", expand.join(","))
         };
-        let url = format!("{}{}('{}'){}", self.base_url, endpoint, key, expand_str);
+        let url = format!("{}{}/{}{}", self.base_url, endpoint, key, expand_str);
         self.execute_get(&url).await
     }
 
