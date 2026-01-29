@@ -214,7 +214,6 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 | `list_analytics_providers` | List available data providers |
 | `get_analytics_requirements` | Get requirements analytics data |
 | `get_analytics_tasks` | Get tasks analytics data |
-| `get_analytics_alerts` | Get alerts analytics data |
 | `get_analytics_defects` | Get defects analytics data |
 | `get_analytics_features` | Get features analytics data |
 | `get_analytics_tests` | Get tests analytics data |
@@ -234,9 +233,13 @@ npx @modelcontextprotocol/inspector ./target/release/sap-cloud-alm-mcp --config 
 ### Process Monitoring API (OData)
 | Tool | Description |
 |------|-------------|
-| `list_monitoring_events` | List monitoring events |
-| `get_monitoring_event` | Get event details |
-| `list_monitoring_services` | List monitored services |
+| `list_business_processes` | List business processes with OData filtering |
+| `get_business_process` | Get a business process by ID |
+| `list_solution_processes` | List solution processes with OData filtering |
+| `get_solution_process` | Get a solution process by ID |
+| `list_solution_process_flows` | List solution process flows with OData filtering |
+| `list_solution_value_flow_diagrams` | List solution value flow diagrams with OData filtering |
+| `list_process_assets` | List process assets with OData filtering |
 
 ### Logs API (REST)
 | Tool | Description |
