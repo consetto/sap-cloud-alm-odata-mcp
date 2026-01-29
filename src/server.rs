@@ -1382,8 +1382,7 @@ impl SapCloudAlmServer {
     async fn list_analytics_providers(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_analytics_providers", &json!({}));
 
-        let result = self.clients.analytics.list_providers().await
-            .map_err(to_mcp_error)?;
+        let result = self.clients.analytics.list_providers();
 
         self.debug.log_tool_result("list_analytics_providers", &result);
 

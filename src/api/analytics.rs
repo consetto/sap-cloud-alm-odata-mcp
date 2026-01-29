@@ -37,9 +37,30 @@ impl AnalyticsClient {
         self.odata_client.get_collection_raw("/Alerts", query).await
     }
 
-    /// List available providers.
-    pub async fn list_providers(&self) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Providers", None).await
+    /// List available providers (static list based on available entity sets).
+    pub fn list_providers(&self) -> Value {
+        serde_json::json!({
+            "providers": [
+                {"name": "Requirements", "description": "Requirements analytics data"},
+                {"name": "Projects", "description": "Projects analytics data"},
+                {"name": "Tasks", "description": "Tasks analytics data"},
+                {"name": "Defects", "description": "Defects analytics data"},
+                {"name": "Tests", "description": "Tests analytics data"},
+                {"name": "Features", "description": "Features analytics data"},
+                {"name": "ConfigurationItems", "description": "Configuration items analytics data"},
+                {"name": "Metrics", "description": "Metrics analytics data"},
+                {"name": "Requests", "description": "Requests analytics data"},
+                {"name": "Exceptions", "description": "Exceptions analytics data"},
+                {"name": "StatusEvents", "description": "Status events analytics data"},
+                {"name": "QualityGates", "description": "Quality gates analytics data"},
+                {"name": "Jobs", "description": "Jobs analytics data"},
+                {"name": "ServiceLevels", "description": "Service levels analytics data"},
+                {"name": "ScenarioExecutions", "description": "Scenario executions analytics data"},
+                {"name": "MonitoringEvents", "description": "Monitoring events analytics data"},
+                {"name": "Messages", "description": "Messages analytics data"}
+            ],
+            "note": "Use these provider names with query_analytics_dataset or the dedicated get_analytics_* tools."
+        })
     }
 
     /// Get defects analytics.

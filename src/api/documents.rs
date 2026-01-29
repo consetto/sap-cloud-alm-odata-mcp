@@ -37,7 +37,7 @@ pub struct DocumentType {
 /// Document status code.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DocumentStatus {
-    pub code: String,
+    pub code: i32,
     pub name: String,
 }
 
