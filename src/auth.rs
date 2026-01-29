@@ -47,17 +47,20 @@ pub struct OAuth2Client {
 
 impl OAuth2Client {
     /// Create a new OAuth2 client.
-    pub fn new(config: Config) -> Self {
+    ///
+    /// # Errors
+    /// Returns `AuthError::HttpClientInit` if the HTTP client cannot be created.
+    pub fn new(config: Config) -> Result<Self, AuthError> {
         let http_client = Client::builder()
             .timeout(config.timeout())
             .build()
-            .expect("Failed to create HTTP client");
+            .map_err(|e| AuthError::HttpClientInit(e.to_string()))?;
 
-        Self {
+        Ok(Self {
             config,
             http_client,
             token_cache: Arc::new(RwLock::new(None)),
-        }
+        })
     }
 
     /// Get a valid access token, refreshing if necessary.

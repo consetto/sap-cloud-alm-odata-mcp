@@ -78,20 +78,23 @@ pub struct ProjectsClient {
 
 impl ProjectsClient {
     /// Create a new Projects client.
-    pub fn new(base_url: String, auth_client: OAuth2Client, debug: bool) -> Self {
+    ///
+    /// # Errors
+    /// Returns `ApiError::HttpClientInit` if the HTTP client cannot be created.
+    pub fn new(base_url: String, auth_client: OAuth2Client, debug: bool) -> Result<Self, ApiError> {
         let is_sandbox = auth_client.is_sandbox();
         let http_client = Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
-            .expect("Failed to create HTTP client");
+            .map_err(|e| ApiError::HttpClientInit(e.to_string()))?;
 
-        Self {
+        Ok(Self {
             base_url,
             http_client,
             auth_client,
             debug,
             is_sandbox,
-        }
+        })
     }
 
     /// Get the appropriate auth header name and value.

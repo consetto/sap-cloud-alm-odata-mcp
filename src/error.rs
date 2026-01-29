@@ -33,6 +33,9 @@ pub enum AuthError {
 
     #[error("No token available")]
     NoToken,
+
+    #[error("Failed to create HTTP client: {0}")]
+    HttpClientInit(String),
 }
 
 /// API request/response errors.
@@ -56,4 +59,7 @@ pub enum ApiError {
 
     #[error("JSON parse error: {0}")]
     JsonParse(#[from] serde_json::Error),
+
+    #[error("Failed to create HTTP client: {0}")]
+    HttpClientInit(String),
 }

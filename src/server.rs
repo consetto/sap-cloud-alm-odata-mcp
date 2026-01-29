@@ -76,6 +76,18 @@ fn to_mcp_error<E: std::fmt::Display>(e: E) -> McpError {
     }
 }
 
+/// Convert a serializable value to a CallToolResult with proper error handling.
+/// This replaces direct `.unwrap()` calls on JSON serialization.
+fn to_json_result<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
+    let json_str = serde_json::to_string_pretty(value)
+        .map_err(|e| McpError {
+            code: ErrorCode::INTERNAL_ERROR,
+            message: Cow::from(format!("JSON serialization failed: {}", e)),
+            data: None,
+        })?;
+    Ok(CallToolResult::success(vec![Content::text(json_str)]))
+}
+
 // ============================================================================
 // Tool Parameter Structs
 // ============================================================================
@@ -533,7 +545,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_features", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get a single feature by UUID. Optionally expand related entities.")]
@@ -545,13 +557,14 @@ impl SapCloudAlmServer {
             self.clients.features.get_feature_with_expand(&params.uuid, &expand_list).await
         } else {
             self.clients.features.get_feature(&params.uuid).await
-                .map(|f| serde_json::to_value(f).unwrap())
+                .map(|f| serde_json::to_value(f).map_err(|e| crate::error::ApiError::JsonParse(e)))
+                .and_then(|r| r)
         };
 
         let json = result.map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_feature", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new feature. Requires user confirmation before execution. Required: title and project_id.")]
@@ -574,7 +587,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_feature", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Update an existing feature. Requires user confirmation before execution. Only provided fields will be updated.")]
@@ -596,7 +609,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("update_feature", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete a feature by UUID. Requires user confirmation before execution.")]
@@ -630,7 +643,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_external_references", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create an external reference for a feature. Requires user confirmation before execution.")]
@@ -650,7 +663,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_external_reference", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete an external reference. Requires user confirmation before execution.")]
@@ -675,7 +688,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_feature_priorities", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List available feature statuses.")]
@@ -688,7 +701,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_feature_statuses", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     // ========================================================================
@@ -714,7 +727,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_documents", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get a single document by UUID.")]
@@ -727,7 +740,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_document", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new document. Requires user confirmation before execution. Required: title.")]
@@ -749,7 +762,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_document", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Update an existing document. Requires user confirmation before execution.")]
@@ -770,7 +783,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("update_document", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete a document by UUID. Requires user confirmation before execution.")]
@@ -795,7 +808,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_document_types", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List available document statuses.")]
@@ -808,7 +821,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_document_statuses", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     // ========================================================================
@@ -840,7 +853,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_tasks", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get a single task by UUID with full details.")]
@@ -853,7 +866,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_task", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new task. Requires user confirmation before execution. Required: project_id, title, task_type.")]
@@ -876,7 +889,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_task", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Update an existing task. Requires user confirmation before execution.")]
@@ -898,7 +911,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("update_task", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete a task by UUID. Requires user confirmation before execution.")]
@@ -923,7 +936,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_task_comments", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Add a comment to a task. Requires user confirmation before execution.")]
@@ -940,7 +953,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_task_comment", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List external references for a task.")]
@@ -953,7 +966,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_task_references", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List workstreams for a project.")]
@@ -966,7 +979,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_workstreams", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List deliverables for a project.")]
@@ -979,7 +992,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_deliverables", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     // ========================================================================
@@ -996,7 +1009,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_projects", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get project details by ID.")]
@@ -1009,7 +1022,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_project", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new project. Requires user confirmation before execution.")]
@@ -1028,7 +1041,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_project", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List timeboxes (sprints) for a project.")]
@@ -1041,7 +1054,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_project_timeboxes", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List team members for a project.")]
@@ -1054,7 +1067,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_project_teams", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List all programs.")]
@@ -1067,7 +1080,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_programs", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get program details by ID.")]
@@ -1080,7 +1093,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_program", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     // ========================================================================
@@ -1106,7 +1119,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_testcases", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get a test case by UUID.")]
@@ -1119,7 +1132,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_testcase", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new manual test case. Requires user confirmation before execution.")]
@@ -1138,7 +1151,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_testcase", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Update an existing test case. Requires user confirmation before execution.")]
@@ -1157,7 +1170,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("update_testcase", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete a test case by UUID. Requires user confirmation before execution.")]
@@ -1191,7 +1204,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_test_activities", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a test activity for a test case. Requires user confirmation before execution.")]
@@ -1211,7 +1224,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_test_activity", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "List test actions with OData filtering.")]
@@ -1233,7 +1246,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_test_actions", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a test action for an activity. Requires user confirmation before execution.")]
@@ -1255,7 +1268,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_test_action", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     // ========================================================================
@@ -1281,7 +1294,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("list_hierarchy_nodes", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "Get a hierarchy node by UUID. Optionally expand toParentNode, toChildNodes, toExternalReferences.")]
@@ -1293,13 +1306,14 @@ impl SapCloudAlmServer {
             self.clients.processhierarchy.get_node_with_expand(&params.uuid, &expand_list).await
         } else {
             self.clients.processhierarchy.get_node(&params.uuid).await
-                .map(|n| serde_json::to_value(n).unwrap())
+                .map(|n| serde_json::to_value(n).map_err(|e| crate::error::ApiError::JsonParse(e)))
+                .and_then(|r| r)
         };
 
         let json = result.map_err(to_mcp_error)?;
         self.debug.log_tool_result("get_hierarchy_node", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Create a new hierarchy node. Requires user confirmation before execution. Required: title.")]
@@ -1319,7 +1333,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("create_hierarchy_node", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Update an existing hierarchy node. Requires user confirmation before execution.")]
@@ -1338,7 +1352,7 @@ impl SapCloudAlmServer {
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
         self.debug.log_tool_result("update_hierarchy_node", &json);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&json).unwrap())]))
+        to_json_result(&json)
     }
 
     #[tool(description = "[EXPERIMENTAL] Delete a hierarchy node by UUID. Requires user confirmation before execution.")]
@@ -1370,7 +1384,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("query_analytics_dataset", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "List available analytics data providers.")]
@@ -1381,7 +1395,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_analytics_providers", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get requirements analytics data.")]
@@ -1402,7 +1416,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_requirements", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get tasks analytics data.")]
@@ -1423,7 +1437,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_tasks", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get defects analytics data.")]
@@ -1444,7 +1458,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_defects", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get features analytics data.")]
@@ -1465,7 +1479,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_features", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get tests analytics data.")]
@@ -1486,7 +1500,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_tests", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get quality gates analytics data.")]
@@ -1507,7 +1521,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_quality_gates", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get projects analytics data.")]
@@ -1528,7 +1542,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_projects", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get configuration items analytics data.")]
@@ -1549,7 +1563,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_configuration_items", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get exceptions analytics data.")]
@@ -1570,7 +1584,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_exceptions", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get jobs analytics data.")]
@@ -1591,7 +1605,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_jobs", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get messages analytics data.")]
@@ -1612,7 +1626,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_messages", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get metrics analytics data.")]
@@ -1633,7 +1647,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_metrics", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get monitoring events analytics data.")]
@@ -1654,7 +1668,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_monitoring_events", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get requests analytics data.")]
@@ -1675,7 +1689,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_requests", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get scenario executions analytics data.")]
@@ -1696,7 +1710,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_scenario_executions", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get service levels analytics data.")]
@@ -1717,7 +1731,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_service_levels", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get status events analytics data.")]
@@ -1738,7 +1752,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_analytics_status_events", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     // ========================================================================
@@ -1763,7 +1777,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_business_processes", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get a business process by ID.")]
@@ -1775,7 +1789,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_business_process", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "List solution processes with OData filtering.")]
@@ -1796,7 +1810,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_solution_processes", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "Get a solution process by ID.")]
@@ -1808,7 +1822,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_solution_process", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "List solution process flows with OData filtering.")]
@@ -1829,7 +1843,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_solution_process_flows", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "List solution value flow diagrams with OData filtering.")]
@@ -1850,7 +1864,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_solution_value_flow_diagrams", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "List process assets with OData filtering.")]
@@ -1871,7 +1885,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("list_process_assets", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     // ========================================================================
@@ -1901,7 +1915,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("get_logs", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 
     #[tool(description = "[EXPERIMENTAL] Post logs (inbound) in OpenTelemetry format. Requires user confirmation before execution. Required: use_case, service_id, logs.")]
@@ -1921,7 +1935,7 @@ impl SapCloudAlmServer {
 
         self.debug.log_tool_result("post_logs", &result);
 
-        Ok(CallToolResult::success(vec![Content::text(serde_json::to_string_pretty(&result).unwrap())]))
+        to_json_result(&result)
     }
 }
 

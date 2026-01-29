@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Create OAuth2 client
-    let auth_client = OAuth2Client::new(config.clone());
+    let auth_client = OAuth2Client::new(config.clone())?;
 
     // Create API clients
     // OData-based clients
@@ -74,42 +74,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.features_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let features_client = FeaturesClient::new(features_odata);
 
     let documents_odata = ODataClient::new(
         config.documents_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let documents_client = DocumentsClient::new(documents_odata);
 
     let testmanagement_odata = ODataClient::new(
         config.testmanagement_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let testmanagement_client = TestManagementClient::new(testmanagement_odata);
 
     let processhierarchy_odata = ODataClient::new(
         config.processhierarchy_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let processhierarchy_client = ProcessHierarchyClient::new(processhierarchy_odata);
 
     let analytics_odata = ODataClient::new(
         config.analytics_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let analytics_client = AnalyticsClient::new(analytics_odata);
 
     let processmonitoring_odata = ODataClient::new(
         config.processmonitoring_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
     let processmonitoring_client = ProcessMonitoringClient::new(processmonitoring_odata);
 
     // REST-based clients
@@ -117,19 +117,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.tasks_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
 
     let projects_client = ProjectsClient::new(
         config.projects_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
 
     let logs_client = LogsClient::new(
         config.logs_api_url(),
         auth_client.clone(),
         debug_enabled,
-    );
+    )?;
 
     // Create MCP server
     let clients = ApiClients {

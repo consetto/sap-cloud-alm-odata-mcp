@@ -102,7 +102,8 @@ impl Config {
             let valid_regions = [
                 "eu10", "eu20", "us10", "ap10", "jp10", "eu10-004", "ca10", "eu11", "cn20",
             ];
-            let region = self.region.as_ref().unwrap();
+            let region = self.region.as_ref()
+                .expect("region already validated as present");
             if !valid_regions.contains(&region.as_str()) {
                 return Err(ConfigError::Invalid(format!(
                     "Invalid region '{}'. Valid regions: {:?}",
@@ -116,27 +117,35 @@ impl Config {
 
     /// Get the OAuth2 token URL.
     /// Returns None in sandbox mode.
+    ///
+    /// # Panics
+    /// Panics if called in OAuth2 mode without tenant/region being set.
+    /// This should not happen if config was validated via `validate()`.
     pub fn token_url(&self) -> Option<String> {
         if self.sandbox {
             None
         } else {
             Some(format!(
                 "https://{}.authentication.{}.hana.ondemand.com/oauth/token",
-                self.tenant.as_ref().unwrap(),
-                self.region.as_ref().unwrap()
+                self.tenant.as_ref().expect("tenant required in OAuth2 mode"),
+                self.region.as_ref().expect("region required in OAuth2 mode")
             ))
         }
     }
 
     /// Get the API base URL.
+    ///
+    /// # Panics
+    /// Panics if called in OAuth2 mode without tenant/region being set.
+    /// This should not happen if config was validated via `validate()`.
     pub fn api_base_url(&self) -> String {
         if self.sandbox {
             SANDBOX_BASE_URL.to_string()
         } else {
             format!(
                 "https://{}.{}.alm.cloud.sap",
-                self.tenant.as_ref().unwrap(),
-                self.region.as_ref().unwrap()
+                self.tenant.as_ref().expect("tenant required in OAuth2 mode"),
+                self.region.as_ref().expect("region required in OAuth2 mode")
             )
         }
     }
@@ -204,6 +213,11 @@ impl Config {
     /// Get token refresh buffer as chrono Duration.
     pub fn token_buffer(&self) -> chrono::Duration {
         chrono::Duration::seconds(self.token_refresh_buffer_seconds as i64)
+    }
+
+    /// Check if running in sandbox mode.
+    pub fn is_sandbox(&self) -> bool {
+        self.sandbox
     }
 }
 
