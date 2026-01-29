@@ -407,7 +407,11 @@ impl ODataClient {
             serde_json::from_str(&body).map_err(|e| {
                 ApiError::JsonParse(serde_json::Error::io(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
-                    format!("Failed to parse response: {} - Body: {}", e, &body[..body.len().min(200)]),
+                    format!(
+                        "Failed to parse response: {} - Body: {}",
+                        e,
+                        &body[..body.len().min(200)]
+                    ),
                 )))
             })
         } else {

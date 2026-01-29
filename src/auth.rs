@@ -68,8 +68,7 @@ impl OAuth2Client {
     pub async fn get_token(&self) -> Result<String, AuthError> {
         // If sandbox mode, return API key directly
         if self.config.sandbox {
-            return self.config.api_key.clone()
-                .ok_or(AuthError::NoToken);
+            return self.config.api_key.clone().ok_or(AuthError::NoToken);
         }
 
         // Check cache first
@@ -93,13 +92,21 @@ impl OAuth2Client {
 
     /// Fetch a new token from the OAuth2 token endpoint.
     async fn fetch_token(&self) -> Result<String, AuthError> {
-        let token_url = self.config.token_url()
+        let token_url = self
+            .config
+            .token_url()
             .ok_or_else(|| AuthError::TokenParse("No token URL in sandbox mode".to_string()))?;
 
         // Create Basic Auth header (Base64 encoded client_id:client_secret)
-        let client_id = self.config.client_id.as_ref()
+        let client_id = self
+            .config
+            .client_id
+            .as_ref()
             .ok_or_else(|| AuthError::TokenParse("Missing client_id".to_string()))?;
-        let client_secret = self.config.client_secret.as_ref()
+        let client_secret = self
+            .config
+            .client_secret
+            .as_ref()
             .ok_or_else(|| AuthError::TokenParse("Missing client_secret".to_string()))?;
         let credentials = format!("{}:{}", client_id, client_secret);
         let encoded = BASE64.encode(credentials.as_bytes());
@@ -127,9 +134,10 @@ impl OAuth2Client {
             return Err(AuthError::TokenRequestFailed { status, body });
         }
 
-        let token_response: TokenResponse = response.json().await.map_err(|e| {
-            AuthError::TokenParse(format!("Failed to parse token response: {}", e))
-        })?;
+        let token_response: TokenResponse = response
+            .json()
+            .await
+            .map_err(|e| AuthError::TokenParse(format!("Failed to parse token response: {}", e)))?;
 
         // Calculate expiration time
         let expires_at = Utc::now() + Duration::seconds(token_response.expires_in);
@@ -154,7 +162,6 @@ impl OAuth2Client {
 
         Ok(token_response.access_token)
     }
-
 }
 
 impl std::fmt::Debug for OAuth2Client {

@@ -117,7 +117,11 @@ impl LogsClient {
     }
 
     /// Post logs (inbound).
-    pub async fn post_logs(&self, params: &PostLogsParams, logs: &Value) -> Result<Value, ApiError> {
+    pub async fn post_logs(
+        &self,
+        params: &PostLogsParams,
+        logs: &Value,
+    ) -> Result<Value, ApiError> {
         let mut url = format!(
             "{}/logs?useCase={}&serviceId={}",
             self.base_url, params.use_case, params.service_id

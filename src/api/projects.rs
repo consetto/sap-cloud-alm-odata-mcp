@@ -119,7 +119,10 @@ impl ProjectsClient {
     }
 
     /// Create a new project.
-    pub async fn create_project(&self, request: &CreateProjectRequest) -> Result<Project, ApiError> {
+    pub async fn create_project(
+        &self,
+        request: &CreateProjectRequest,
+    ) -> Result<Project, ApiError> {
         let url = format!("{}/projects", self.base_url);
         self.post(&url, request).await
     }

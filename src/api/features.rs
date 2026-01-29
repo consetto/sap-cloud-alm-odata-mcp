@@ -115,9 +115,7 @@ impl FeaturesClient {
         &self,
         query: Option<ODataQuery>,
     ) -> Result<ODataCollection<Feature>, ApiError> {
-        self.odata_client
-            .get_collection("/Features", query)
-            .await
+        self.odata_client.get_collection("/Features", query).await
     }
 
     /// Get a single feature by UUID.
@@ -143,9 +141,7 @@ impl FeaturesClient {
         &self,
         request: &CreateFeatureRequest,
     ) -> Result<Feature, ApiError> {
-        self.odata_client
-            .create_entity("/Features", request)
-            .await
+        self.odata_client.create_entity("/Features", request).await
     }
 
     /// Update an existing feature.
@@ -193,9 +189,7 @@ impl FeaturesClient {
         parent_uuid: &str,
     ) -> Result<(), ApiError> {
         let endpoint = format!("/ExternalReferences/{}/{}", id, parent_uuid);
-        self.odata_client
-            .delete_entity_by_uuid(&endpoint, "")
-            .await
+        self.odata_client.delete_entity_by_uuid(&endpoint, "").await
     }
 
     /// List priority codes.

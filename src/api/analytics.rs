@@ -18,7 +18,13 @@ impl AnalyticsClient {
 
     /// Query a generic dataset by provider name.
     /// The provider is passed as a $filter parameter: provider eq 'ProviderName'
-    pub async fn query_dataset(&self, provider: &str, additional_filter: Option<String>, top: Option<u32>, skip: Option<u32>) -> Result<Value, ApiError> {
+    pub async fn query_dataset(
+        &self,
+        provider: &str,
+        additional_filter: Option<String>,
+        top: Option<u32>,
+        skip: Option<u32>,
+    ) -> Result<Value, ApiError> {
         let provider_filter = format!("provider eq '{}'", provider);
 
         // Combine provider filter with any additional filter
@@ -36,12 +42,16 @@ impl AnalyticsClient {
             query = query.skip(s);
         }
 
-        self.odata_client.get_collection_raw("/DataSet", Some(query)).await
+        self.odata_client
+            .get_collection_raw("/DataSet", Some(query))
+            .await
     }
 
     /// Get requirements analytics.
     pub async fn get_requirements(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Requirements", query).await
+        self.odata_client
+            .get_collection_raw("/Requirements", query)
+            .await
     }
 
     /// Get tasks analytics.
@@ -77,12 +87,16 @@ impl AnalyticsClient {
 
     /// Get defects analytics.
     pub async fn get_defects(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Defects", query).await
+        self.odata_client
+            .get_collection_raw("/Defects", query)
+            .await
     }
 
     /// Get features analytics.
     pub async fn get_features(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Features", query).await
+        self.odata_client
+            .get_collection_raw("/Features", query)
+            .await
     }
 
     /// Get tests analytics.
@@ -92,22 +106,33 @@ impl AnalyticsClient {
 
     /// Get quality gates analytics.
     pub async fn get_quality_gates(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/QualityGates", query).await
+        self.odata_client
+            .get_collection_raw("/QualityGates", query)
+            .await
     }
 
     /// Get projects analytics.
     pub async fn get_projects(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Projects", query).await
+        self.odata_client
+            .get_collection_raw("/Projects", query)
+            .await
     }
 
     /// Get configuration items analytics.
-    pub async fn get_configuration_items(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/ConfigurationItems", query).await
+    pub async fn get_configuration_items(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<Value, ApiError> {
+        self.odata_client
+            .get_collection_raw("/ConfigurationItems", query)
+            .await
     }
 
     /// Get exceptions analytics.
     pub async fn get_exceptions(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Exceptions", query).await
+        self.odata_client
+            .get_collection_raw("/Exceptions", query)
+            .await
     }
 
     /// Get jobs analytics.
@@ -117,37 +142,57 @@ impl AnalyticsClient {
 
     /// Get messages analytics.
     pub async fn get_messages(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Messages", query).await
+        self.odata_client
+            .get_collection_raw("/Messages", query)
+            .await
     }
 
     /// Get metrics analytics.
     pub async fn get_metrics(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Metrics", query).await
+        self.odata_client
+            .get_collection_raw("/Metrics", query)
+            .await
     }
 
     /// Get monitoring events analytics.
-    pub async fn get_monitoring_events(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/MonitoringEvents", query).await
+    pub async fn get_monitoring_events(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<Value, ApiError> {
+        self.odata_client
+            .get_collection_raw("/MonitoringEvents", query)
+            .await
     }
 
     /// Get requests analytics.
     pub async fn get_requests(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/Requests", query).await
+        self.odata_client
+            .get_collection_raw("/Requests", query)
+            .await
     }
 
     /// Get scenario executions analytics.
-    pub async fn get_scenario_executions(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/ScenarioExecutions", query).await
+    pub async fn get_scenario_executions(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<Value, ApiError> {
+        self.odata_client
+            .get_collection_raw("/ScenarioExecutions", query)
+            .await
     }
 
     /// Get service levels analytics.
     pub async fn get_service_levels(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/ServiceLevels", query).await
+        self.odata_client
+            .get_collection_raw("/ServiceLevels", query)
+            .await
     }
 
     /// Get status events analytics.
     pub async fn get_status_events(&self, query: Option<ODataQuery>) -> Result<Value, ApiError> {
-        self.odata_client.get_collection_raw("/StatusEvents", query).await
+        self.odata_client
+            .get_collection_raw("/StatusEvents", query)
+            .await
     }
 }
 

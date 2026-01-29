@@ -69,9 +69,15 @@ impl Config {
         if self.sandbox {
             // Sandbox mode: require api_key
             match &self.api_key {
-                None => return Err(ConfigError::MissingField("api_key (required in sandbox mode)".into())),
+                None => {
+                    return Err(ConfigError::MissingField(
+                        "api_key (required in sandbox mode)".into(),
+                    ))
+                }
                 Some(key) if key.is_empty() => {
-                    return Err(ConfigError::MissingField("api_key (required in sandbox mode)".into()))
+                    return Err(ConfigError::MissingField(
+                        "api_key (required in sandbox mode)".into(),
+                    ))
                 }
                 _ => {}
             }
@@ -89,12 +95,16 @@ impl Config {
             }
             match &self.client_id {
                 None => return Err(ConfigError::MissingField("client_id".into())),
-                Some(c) if c.is_empty() => return Err(ConfigError::MissingField("client_id".into())),
+                Some(c) if c.is_empty() => {
+                    return Err(ConfigError::MissingField("client_id".into()))
+                }
                 _ => {}
             }
             match &self.client_secret {
                 None => return Err(ConfigError::MissingField("client_secret".into())),
-                Some(s) if s.is_empty() => return Err(ConfigError::MissingField("client_secret".into())),
+                Some(s) if s.is_empty() => {
+                    return Err(ConfigError::MissingField("client_secret".into()))
+                }
                 _ => {}
             }
 
@@ -102,7 +112,9 @@ impl Config {
             let valid_regions = [
                 "eu10", "eu20", "us10", "ap10", "jp10", "eu10-004", "ca10", "eu11", "cn20",
             ];
-            let region = self.region.as_ref()
+            let region = self
+                .region
+                .as_ref()
                 .expect("region already validated as present");
             if !valid_regions.contains(&region.as_str()) {
                 return Err(ConfigError::Invalid(format!(
@@ -127,8 +139,12 @@ impl Config {
         } else {
             Some(format!(
                 "https://{}.authentication.{}.hana.ondemand.com/oauth/token",
-                self.tenant.as_ref().expect("tenant required in OAuth2 mode"),
-                self.region.as_ref().expect("region required in OAuth2 mode")
+                self.tenant
+                    .as_ref()
+                    .expect("tenant required in OAuth2 mode"),
+                self.region
+                    .as_ref()
+                    .expect("region required in OAuth2 mode")
             ))
         }
     }
@@ -144,8 +160,12 @@ impl Config {
         } else {
             format!(
                 "https://{}.{}.alm.cloud.sap",
-                self.tenant.as_ref().expect("tenant required in OAuth2 mode"),
-                self.region.as_ref().expect("region required in OAuth2 mode")
+                self.tenant
+                    .as_ref()
+                    .expect("tenant required in OAuth2 mode"),
+                self.region
+                    .as_ref()
+                    .expect("region required in OAuth2 mode")
             )
         }
     }
@@ -162,47 +182,83 @@ impl Config {
 
     /// Get the Features API URL.
     pub fn features_api_url(&self) -> String {
-        format!("{}{}/calm-features/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-features/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Documents API URL.
     pub fn documents_api_url(&self) -> String {
-        format!("{}{}/calm-documents/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-documents/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Tasks API URL.
     pub fn tasks_api_url(&self) -> String {
-        format!("{}{}/calm-tasks/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-tasks/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Projects API URL.
     pub fn projects_api_url(&self) -> String {
-        format!("{}{}/calm-projects/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-projects/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Test Management API URL.
     pub fn testmanagement_api_url(&self) -> String {
-        format!("{}{}/calm-testmanagement/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-testmanagement/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Process Hierarchy API URL.
     pub fn processhierarchy_api_url(&self) -> String {
-        format!("{}{}/calm-processhierarchy/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-processhierarchy/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Analytics API URL.
     pub fn analytics_api_url(&self) -> String {
-        format!("{}{}/calm-analytics/v1/odata/v4/analytics", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-analytics/v1/odata/v4/analytics",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Process Monitoring API URL.
     pub fn processmonitoring_api_url(&self) -> String {
-        format!("{}{}/calm-processmonitoring/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-processmonitoring/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get the Logs API URL.
     pub fn logs_api_url(&self) -> String {
-        format!("{}{}/calm-logs/v1", self.api_base_url(), self.api_path_prefix())
+        format!(
+            "{}{}/calm-logs/v1",
+            self.api_base_url(),
+            self.api_path_prefix()
+        )
     }
 
     /// Get timeout as Duration.
@@ -216,6 +272,7 @@ impl Config {
     }
 
     /// Check if running in sandbox mode.
+    #[cfg(test)]
     pub fn is_sandbox(&self) -> bool {
         self.sandbox
     }
@@ -269,10 +326,7 @@ mod tests {
         };
 
         assert_eq!(config.token_url(), None);
-        assert_eq!(
-            config.api_base_url(),
-            "https://sandbox.api.sap.com/SAPCALM"
-        );
+        assert_eq!(config.api_base_url(), "https://sandbox.api.sap.com/SAPCALM");
         assert_eq!(
             config.features_api_url(),
             "https://sandbox.api.sap.com/SAPCALM/calm-features/v1"

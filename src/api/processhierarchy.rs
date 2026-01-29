@@ -59,28 +59,54 @@ impl ProcessHierarchyClient {
         Self { odata_client }
     }
 
-    pub async fn list_nodes(&self, query: Option<ODataQuery>) -> Result<ODataCollection<HierarchyNode>, ApiError> {
-        self.odata_client.get_collection("/HierarchyNodes", query).await
+    pub async fn list_nodes(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<ODataCollection<HierarchyNode>, ApiError> {
+        self.odata_client
+            .get_collection("/HierarchyNodes", query)
+            .await
     }
 
     pub async fn get_node(&self, uuid: &str) -> Result<HierarchyNode, ApiError> {
-        self.odata_client.get_entity_by_uuid("/HierarchyNodes", uuid).await
+        self.odata_client
+            .get_entity_by_uuid("/HierarchyNodes", uuid)
+            .await
     }
 
-    pub async fn get_node_with_expand(&self, uuid: &str, expand: &[&str]) -> Result<Value, ApiError> {
-        self.odata_client.get_entity_with_expand("/HierarchyNodes", uuid, expand).await
+    pub async fn get_node_with_expand(
+        &self,
+        uuid: &str,
+        expand: &[&str],
+    ) -> Result<Value, ApiError> {
+        self.odata_client
+            .get_entity_with_expand("/HierarchyNodes", uuid, expand)
+            .await
     }
 
-    pub async fn create_node(&self, request: &CreateHierarchyNodeRequest) -> Result<HierarchyNode, ApiError> {
-        self.odata_client.create_entity("/HierarchyNodes", request).await
+    pub async fn create_node(
+        &self,
+        request: &CreateHierarchyNodeRequest,
+    ) -> Result<HierarchyNode, ApiError> {
+        self.odata_client
+            .create_entity("/HierarchyNodes", request)
+            .await
     }
 
-    pub async fn update_node(&self, uuid: &str, request: &UpdateHierarchyNodeRequest) -> Result<HierarchyNode, ApiError> {
-        self.odata_client.update_entity_by_uuid("/HierarchyNodes", uuid, request).await
+    pub async fn update_node(
+        &self,
+        uuid: &str,
+        request: &UpdateHierarchyNodeRequest,
+    ) -> Result<HierarchyNode, ApiError> {
+        self.odata_client
+            .update_entity_by_uuid("/HierarchyNodes", uuid, request)
+            .await
     }
 
     pub async fn delete_node(&self, uuid: &str) -> Result<(), ApiError> {
-        self.odata_client.delete_entity_by_uuid("/HierarchyNodes", uuid).await
+        self.odata_client
+            .delete_entity_by_uuid("/HierarchyNodes", uuid)
+            .await
     }
 }
 

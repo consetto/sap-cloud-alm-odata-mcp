@@ -57,8 +57,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             debug.log(&format!("Base URL: {}", config.api_base_url()));
         } else {
             debug.log("Mode: OAuth2 (Production)");
-            debug.log(&format!("Tenant: {}", config.tenant.as_deref().unwrap_or("N/A")));
-            debug.log(&format!("Region: {}", config.region.as_deref().unwrap_or("N/A")));
+            debug.log(&format!(
+                "Tenant: {}",
+                config.tenant.as_deref().unwrap_or("N/A")
+            ));
+            debug.log(&format!(
+                "Region: {}",
+                config.region.as_deref().unwrap_or("N/A")
+            ));
         }
         if let Some(path) = debug.trace_path() {
             eprintln!("[DEBUG] Trace file: {}", path.display());
@@ -113,11 +119,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let processmonitoring_client = ProcessMonitoringClient::new(processmonitoring_odata);
 
     // REST-based clients
-    let tasks_client = TasksClient::new(
-        config.tasks_api_url(),
-        auth_client.clone(),
-        debug_enabled,
-    )?;
+    let tasks_client =
+        TasksClient::new(config.tasks_api_url(), auth_client.clone(), debug_enabled)?;
 
     let projects_client = ProjectsClient::new(
         config.projects_api_url(),
@@ -125,11 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         debug_enabled,
     )?;
 
-    let logs_client = LogsClient::new(
-        config.logs_api_url(),
-        auth_client.clone(),
-        debug_enabled,
-    )?;
+    let logs_client = LogsClient::new(config.logs_api_url(), auth_client.clone(), debug_enabled)?;
 
     // Create MCP server
     let clients = ApiClients {

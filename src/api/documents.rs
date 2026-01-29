@@ -91,9 +91,7 @@ impl DocumentsClient {
         &self,
         query: Option<ODataQuery>,
     ) -> Result<ODataCollection<Document>, ApiError> {
-        self.odata_client
-            .get_collection("/Documents", query)
-            .await
+        self.odata_client.get_collection("/Documents", query).await
     }
 
     /// Get a single document by UUID.
@@ -108,9 +106,7 @@ impl DocumentsClient {
         &self,
         request: &CreateDocumentRequest,
     ) -> Result<Document, ApiError> {
-        self.odata_client
-            .create_entity("/Documents", request)
-            .await
+        self.odata_client.create_entity("/Documents", request).await
     }
 
     /// Update an existing document.

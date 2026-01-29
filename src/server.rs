@@ -6,8 +6,8 @@ use std::sync::Arc;
 use rmcp::{
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
     model::{
-        CallToolResult, Content, ErrorCode, ErrorData as McpError, Implementation,
-        ProtocolVersion, ServerCapabilities, ServerInfo,
+        CallToolResult, Content, ErrorCode, ErrorData as McpError, Implementation, ProtocolVersion,
+        ServerCapabilities, ServerInfo,
     },
     schemars::{self, JsonSchema},
     tool, tool_handler, tool_router, ServerHandler,
@@ -15,18 +15,23 @@ use rmcp::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::api::{
-    AnalyticsClient, DocumentsClient, FeaturesClient, LogsClient, ProcessHierarchyClient,
-    ProcessMonitoringClient, ProjectsClient, TasksClient, TestManagementClient,
-};
 use crate::api::documents::{CreateDocumentRequest, UpdateDocumentRequest};
-use crate::api::features::{CreateExternalReferenceRequest, CreateFeatureRequest, UpdateFeatureRequest};
+use crate::api::features::{
+    CreateExternalReferenceRequest, CreateFeatureRequest, UpdateFeatureRequest,
+};
 use crate::api::logs::{GetLogsParams, PostLogsParams};
 use crate::api::processhierarchy::{CreateHierarchyNodeRequest, UpdateHierarchyNodeRequest};
 use crate::api::projects::CreateProjectRequest;
-use crate::api::tasks::{CreateTaskCommentRequest, CreateTaskRequest, ListTasksParams, UpdateTaskRequest};
+use crate::api::tasks::{
+    CreateTaskCommentRequest, CreateTaskRequest, ListTasksParams, UpdateTaskRequest,
+};
 use crate::api::testmanagement::{
-    CreateTestActionRequest, CreateTestActivityRequest, CreateTestCaseRequest, UpdateTestCaseRequest,
+    CreateTestActionRequest, CreateTestActivityRequest, CreateTestCaseRequest,
+    UpdateTestCaseRequest,
+};
+use crate::api::{
+    AnalyticsClient, DocumentsClient, FeaturesClient, LogsClient, ProcessHierarchyClient,
+    ProcessMonitoringClient, ProjectsClient, TasksClient, TestManagementClient,
 };
 use crate::debug::DebugLogger;
 use crate::odata::ODataQuery;
@@ -79,12 +84,11 @@ fn to_mcp_error<E: std::fmt::Display>(e: E) -> McpError {
 /// Convert a serializable value to a CallToolResult with proper error handling.
 /// This replaces direct `.unwrap()` calls on JSON serialization.
 fn to_json_result<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
-    let json_str = serde_json::to_string_pretty(value)
-        .map_err(|e| McpError {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::from(format!("JSON serialization failed: {}", e)),
-            data: None,
-        })?;
+    let json_str = serde_json::to_string_pretty(value).map_err(|e| McpError {
+        code: ErrorCode::INTERNAL_ERROR,
+        message: Cow::from(format!("JSON serialization failed: {}", e)),
+        data: None,
+    })?;
     Ok(CallToolResult::success(vec![Content::text(json_str)]))
 }
 
@@ -526,8 +530,13 @@ impl SapCloudAlmServer {
     // Features API Tools
     // ========================================================================
 
-    #[tool(description = "List features from SAP Cloud ALM with OData filtering. Supports $filter, $select, $expand, $orderby, $top, $skip.")]
-    async fn list_features(&self, Parameters(params): Parameters<ListFeaturesParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "List features from SAP Cloud ALM with OData filtering. Supports $filter, $select, $expand, $orderby, $top, $skip."
+    )]
+    async fn list_features(
+        &self,
+        Parameters(params): Parameters<ListFeaturesParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_features", &json!(params));
 
         let query = build_odata_query(
@@ -539,7 +548,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.features.list_features(query).await
+        let result = self
+            .clients
+            .features
+            .list_features(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -549,15 +562,27 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get a single feature by UUID. Optionally expand related entities.")]
-    async fn get_feature(&self, Parameters(params): Parameters<GetFeatureParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_feature", &json!({"uuid": params.uuid, "expand": params.expand}));
+    async fn get_feature(
+        &self,
+        Parameters(params): Parameters<GetFeatureParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "get_feature",
+            &json!({"uuid": params.uuid, "expand": params.expand}),
+        );
 
         let result = if let Some(ref expand) = params.expand {
             let expand_list: Vec<&str> = expand.split(',').map(|s: &str| s.trim()).collect();
-            self.clients.features.get_feature_with_expand(&params.uuid, &expand_list).await
+            self.clients
+                .features
+                .get_feature_with_expand(&params.uuid, &expand_list)
+                .await
         } else {
-            self.clients.features.get_feature(&params.uuid).await
-                .map(|f| serde_json::to_value(f).map_err(|e| crate::error::ApiError::JsonParse(e)))
+            self.clients
+                .features
+                .get_feature(&params.uuid)
+                .await
+                .map(|f| serde_json::to_value(f).map_err(crate::error::ApiError::JsonParse))
                 .and_then(|r| r)
         };
 
@@ -567,8 +592,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new feature. Requires user confirmation before execution. Required: title and project_id.")]
-    async fn create_feature(&self, Parameters(params): Parameters<CreateFeatureParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new feature. Requires user confirmation before execution. Required: title and project_id."
+    )]
+    async fn create_feature(
+        &self,
+        Parameters(params): Parameters<CreateFeatureParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_feature", &json!(params));
 
         let request = CreateFeatureRequest {
@@ -581,7 +611,11 @@ impl SapCloudAlmServer {
             scope_id: params.scope_id,
         };
 
-        let result = self.clients.features.create_feature(&request).await
+        let result = self
+            .clients
+            .features
+            .create_feature(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -590,8 +624,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Update an existing feature. Requires user confirmation before execution. Only provided fields will be updated.")]
-    async fn update_feature(&self, Parameters(params): Parameters<UpdateFeatureParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Update an existing feature. Requires user confirmation before execution. Only provided fields will be updated."
+    )]
+    async fn update_feature(
+        &self,
+        Parameters(params): Parameters<UpdateFeatureParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_feature", &json!(params));
 
         let request = UpdateFeatureRequest {
@@ -603,7 +642,11 @@ impl SapCloudAlmServer {
             scope_id: None,
         };
 
-        let result = self.clients.features.update_feature(&params.uuid, &request).await
+        let result = self
+            .clients
+            .features
+            .update_feature(&params.uuid, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -612,21 +655,37 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete a feature by UUID. Requires user confirmation before execution.")]
-    async fn delete_feature(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_feature", &json!({"uuid": params.uuid}));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete a feature by UUID. Requires user confirmation before execution."
+    )]
+    async fn delete_feature(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_feature", &json!({"uuid": params.uuid}));
 
-        self.clients.features.delete_feature(&params.uuid).await
+        self.clients
+            .features
+            .delete_feature(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_feature", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_feature", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true, "uuid": params.uuid}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true, "uuid": params.uuid}).to_string(),
+        )]))
     }
 
     #[tool(description = "List external references with OData filtering.")]
-    async fn list_external_references(&self, Parameters(params): Parameters<ListExternalReferencesParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_external_references", &json!(params));
+    async fn list_external_references(
+        &self,
+        Parameters(params): Parameters<ListExternalReferencesParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_external_references", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -637,18 +696,29 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.features.list_external_references(query).await
+        let result = self
+            .clients
+            .features
+            .list_external_references(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
-        self.debug.log_tool_result("list_external_references", &json);
+        self.debug
+            .log_tool_result("list_external_references", &json);
 
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create an external reference for a feature. Requires user confirmation before execution.")]
-    async fn create_external_reference(&self, Parameters(params): Parameters<CreateExternalReferenceParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("create_external_reference", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Create an external reference for a feature. Requires user confirmation before execution."
+    )]
+    async fn create_external_reference(
+        &self,
+        Parameters(params): Parameters<CreateExternalReferenceParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("create_external_reference", &json!(params));
 
         let request = CreateExternalReferenceRequest {
             parent_uuid: params.parent_uuid,
@@ -657,32 +727,54 @@ impl SapCloudAlmServer {
             url: Some(params.url),
         };
 
-        let result = self.clients.features.create_external_reference(&request).await
+        let result = self
+            .clients
+            .features
+            .create_external_reference(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
-        self.debug.log_tool_result("create_external_reference", &json);
+        self.debug
+            .log_tool_result("create_external_reference", &json);
 
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete an external reference. Requires user confirmation before execution.")]
-    async fn delete_external_reference(&self, Parameters(params): Parameters<DeleteExternalReferenceParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_external_reference", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete an external reference. Requires user confirmation before execution."
+    )]
+    async fn delete_external_reference(
+        &self,
+        Parameters(params): Parameters<DeleteExternalReferenceParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_external_reference", &json!(params));
 
-        self.clients.features.delete_external_reference(&params.id, &params.parent_uuid).await
+        self.clients
+            .features
+            .delete_external_reference(&params.id, &params.parent_uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_external_reference", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_external_reference", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true}).to_string(),
+        )]))
     }
 
     #[tool(description = "List available feature priorities.")]
     async fn list_feature_priorities(&self) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_feature_priorities", &json!({}));
+        self.debug
+            .log_tool_call("list_feature_priorities", &json!({}));
 
-        let result = self.clients.features.list_priorities().await
+        let result = self
+            .clients
+            .features
+            .list_priorities()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -693,9 +785,14 @@ impl SapCloudAlmServer {
 
     #[tool(description = "List available feature statuses.")]
     async fn list_feature_statuses(&self) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_feature_statuses", &json!({}));
+        self.debug
+            .log_tool_call("list_feature_statuses", &json!({}));
 
-        let result = self.clients.features.list_statuses().await
+        let result = self
+            .clients
+            .features
+            .list_statuses()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -709,7 +806,10 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "List documents from SAP Cloud ALM with OData filtering.")]
-    async fn list_documents(&self, Parameters(params): Parameters<ListDocumentsParams>) -> Result<CallToolResult, McpError> {
+    async fn list_documents(
+        &self,
+        Parameters(params): Parameters<ListDocumentsParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_documents", &json!(params));
 
         let query = build_odata_query(
@@ -721,7 +821,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.documents.list_documents(query).await
+        let result = self
+            .clients
+            .documents
+            .list_documents(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -731,10 +835,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get a single document by UUID.")]
-    async fn get_document(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_document", &json!({"uuid": params.uuid}));
+    async fn get_document(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_document", &json!({"uuid": params.uuid}));
 
-        let result = self.clients.documents.get_document(&params.uuid).await
+        let result = self
+            .clients
+            .documents
+            .get_document(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -743,8 +855,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new document. Requires user confirmation before execution. Required: title.")]
-    async fn create_document(&self, Parameters(params): Parameters<CreateDocumentParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new document. Requires user confirmation before execution. Required: title."
+    )]
+    async fn create_document(
+        &self,
+        Parameters(params): Parameters<CreateDocumentParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_document", &json!(params));
 
         let request = CreateDocumentRequest {
@@ -756,7 +873,11 @@ impl SapCloudAlmServer {
             priority_code: None,
         };
 
-        let result = self.clients.documents.create_document(&request).await
+        let result = self
+            .clients
+            .documents
+            .create_document(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -765,8 +886,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Update an existing document. Requires user confirmation before execution.")]
-    async fn update_document(&self, Parameters(params): Parameters<UpdateDocumentParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Update an existing document. Requires user confirmation before execution."
+    )]
+    async fn update_document(
+        &self,
+        Parameters(params): Parameters<UpdateDocumentParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_document", &json!(params));
 
         let request = UpdateDocumentRequest {
@@ -777,7 +903,11 @@ impl SapCloudAlmServer {
             type_code: None,
         };
 
-        let result = self.clients.documents.update_document(&params.uuid, &request).await
+        let result = self
+            .clients
+            .documents
+            .update_document(&params.uuid, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -786,23 +916,39 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete a document by UUID. Requires user confirmation before execution.")]
-    async fn delete_document(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_document", &json!({"uuid": params.uuid}));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete a document by UUID. Requires user confirmation before execution."
+    )]
+    async fn delete_document(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_document", &json!({"uuid": params.uuid}));
 
-        self.clients.documents.delete_document(&params.uuid).await
+        self.clients
+            .documents
+            .delete_document(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_document", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_document", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true, "uuid": params.uuid}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true, "uuid": params.uuid}).to_string(),
+        )]))
     }
 
     #[tool(description = "List available document types.")]
     async fn list_document_types(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_document_types", &json!({}));
 
-        let result = self.clients.documents.list_types().await
+        let result = self
+            .clients
+            .documents
+            .list_types()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -813,9 +959,14 @@ impl SapCloudAlmServer {
 
     #[tool(description = "List available document statuses.")]
     async fn list_document_statuses(&self) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_document_statuses", &json!({}));
+        self.debug
+            .log_tool_call("list_document_statuses", &json!({}));
 
-        let result = self.clients.documents.list_statuses().await
+        let result = self
+            .clients
+            .documents
+            .list_statuses()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -828,12 +979,19 @@ impl SapCloudAlmServer {
     // Tasks API Tools
     // ========================================================================
 
-    #[tool(description = "List tasks for a project. Required: project_id. Supports filtering by type, status, assignee, tags.")]
-    async fn list_tasks(&self, Parameters(params): Parameters<ListTasksToolParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "List tasks for a project. Required: project_id. Supports filtering by type, status, assignee, tags."
+    )]
+    async fn list_tasks(
+        &self,
+        Parameters(params): Parameters<ListTasksToolParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_tasks", &json!(params));
 
         // Convert comma-separated tags to Vec if provided
-        let tags: Option<Vec<String>> = params.tags.map(|t: String| t.split(',').map(|s: &str| s.trim().to_string()).collect());
+        let tags: Option<Vec<String>> = params
+            .tags
+            .map(|t: String| t.split(',').map(|s: &str| s.trim().to_string()).collect());
 
         let list_params = ListTasksParams {
             project_id: params.project_id,
@@ -847,7 +1005,11 @@ impl SapCloudAlmServer {
             ..Default::default()
         };
 
-        let result = self.clients.tasks.list_tasks(&list_params).await
+        let result = self
+            .clients
+            .tasks
+            .list_tasks(&list_params)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -857,10 +1019,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get a single task by UUID with full details.")]
-    async fn get_task(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_task", &json!({"uuid": params.uuid}));
+    async fn get_task(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_task", &json!({"uuid": params.uuid}));
 
-        let result = self.clients.tasks.get_task(&params.uuid).await
+        let result = self
+            .clients
+            .tasks
+            .get_task(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -869,8 +1039,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new task. Requires user confirmation before execution. Required: project_id, title, task_type.")]
-    async fn create_task(&self, Parameters(params): Parameters<CreateTaskParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new task. Requires user confirmation before execution. Required: project_id, title, task_type."
+    )]
+    async fn create_task(
+        &self,
+        Parameters(params): Parameters<CreateTaskParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_task", &json!(params));
 
         let request = CreateTaskRequest {
@@ -883,7 +1058,11 @@ impl SapCloudAlmServer {
             due_date: params.due_date,
         };
 
-        let result = self.clients.tasks.create_task(&request).await
+        let result = self
+            .clients
+            .tasks
+            .create_task(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -892,8 +1071,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Update an existing task. Requires user confirmation before execution.")]
-    async fn update_task(&self, Parameters(params): Parameters<UpdateTaskParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Update an existing task. Requires user confirmation before execution."
+    )]
+    async fn update_task(
+        &self,
+        Parameters(params): Parameters<UpdateTaskParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_task", &json!(params));
 
         let request = UpdateTaskRequest {
@@ -905,7 +1089,11 @@ impl SapCloudAlmServer {
             due_date: None,
         };
 
-        let result = self.clients.tasks.update_task(&params.uuid, &request).await
+        let result = self
+            .clients
+            .tasks
+            .update_task(&params.uuid, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -914,23 +1102,43 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete a task by UUID. Requires user confirmation before execution.")]
-    async fn delete_task(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_task", &json!({"uuid": params.uuid}));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete a task by UUID. Requires user confirmation before execution."
+    )]
+    async fn delete_task(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_task", &json!({"uuid": params.uuid}));
 
-        self.clients.tasks.delete_task(&params.uuid).await
+        self.clients
+            .tasks
+            .delete_task(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_task", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_task", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true, "uuid": params.uuid}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true, "uuid": params.uuid}).to_string(),
+        )]))
     }
 
     #[tool(description = "List comments on a task.")]
-    async fn list_task_comments(&self, Parameters(params): Parameters<TaskIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_task_comments", &json!({"task_id": params.task_id}));
+    async fn list_task_comments(
+        &self,
+        Parameters(params): Parameters<TaskIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_task_comments", &json!({"task_id": params.task_id}));
 
-        let result = self.clients.tasks.list_task_comments(&params.task_id).await
+        let result = self
+            .clients
+            .tasks
+            .list_task_comments(&params.task_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -939,15 +1147,25 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Add a comment to a task. Requires user confirmation before execution.")]
-    async fn create_task_comment(&self, Parameters(params): Parameters<CreateTaskCommentParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("create_task_comment", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Add a comment to a task. Requires user confirmation before execution."
+    )]
+    async fn create_task_comment(
+        &self,
+        Parameters(params): Parameters<CreateTaskCommentParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("create_task_comment", &json!(params));
 
         let request = CreateTaskCommentRequest {
             content: params.content,
         };
 
-        let result = self.clients.tasks.create_task_comment(&params.task_id, &request).await
+        let result = self
+            .clients
+            .tasks
+            .create_task_comment(&params.task_id, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -957,10 +1175,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List external references for a task.")]
-    async fn list_task_references(&self, Parameters(params): Parameters<TaskIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_task_references", &json!({"task_id": params.task_id}));
+    async fn list_task_references(
+        &self,
+        Parameters(params): Parameters<TaskIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_task_references", &json!({"task_id": params.task_id}));
 
-        let result = self.clients.tasks.list_task_references(&params.task_id).await
+        let result = self
+            .clients
+            .tasks
+            .list_task_references(&params.task_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -970,10 +1196,20 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List workstreams for a project.")]
-    async fn list_workstreams(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_workstreams", &json!({"project_id": params.project_id}));
+    async fn list_workstreams(
+        &self,
+        Parameters(params): Parameters<ProjectIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "list_workstreams",
+            &json!({"project_id": params.project_id}),
+        );
 
-        let result = self.clients.tasks.list_workstreams(&params.project_id).await
+        let result = self
+            .clients
+            .tasks
+            .list_workstreams(&params.project_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -983,10 +1219,20 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List deliverables for a project.")]
-    async fn list_deliverables(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_deliverables", &json!({"project_id": params.project_id}));
+    async fn list_deliverables(
+        &self,
+        Parameters(params): Parameters<ProjectIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "list_deliverables",
+            &json!({"project_id": params.project_id}),
+        );
 
-        let result = self.clients.tasks.list_deliverables(&params.project_id).await
+        let result = self
+            .clients
+            .tasks
+            .list_deliverables(&params.project_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1003,7 +1249,11 @@ impl SapCloudAlmServer {
     async fn list_projects(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_projects", &json!({}));
 
-        let result = self.clients.projects.list_projects().await
+        let result = self
+            .clients
+            .projects
+            .list_projects()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1013,10 +1263,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get project details by ID.")]
-    async fn get_project(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_project", &json!({"id": params.id}));
+    async fn get_project(
+        &self,
+        Parameters(params): Parameters<IdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_project", &json!({"id": params.id}));
 
-        let result = self.clients.projects.get_project(&params.id).await
+        let result = self
+            .clients
+            .projects
+            .get_project(&params.id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1025,8 +1283,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new project. Requires user confirmation before execution.")]
-    async fn create_project(&self, Parameters(params): Parameters<CreateProjectParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new project. Requires user confirmation before execution."
+    )]
+    async fn create_project(
+        &self,
+        Parameters(params): Parameters<CreateProjectParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_project", &json!(params));
 
         let request = CreateProjectRequest {
@@ -1035,7 +1298,11 @@ impl SapCloudAlmServer {
             program_id: params.program_id,
         };
 
-        let result = self.clients.projects.create_project(&request).await
+        let result = self
+            .clients
+            .projects
+            .create_project(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1045,10 +1312,20 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List timeboxes (sprints) for a project.")]
-    async fn list_project_timeboxes(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_project_timeboxes", &json!({"project_id": params.project_id}));
+    async fn list_project_timeboxes(
+        &self,
+        Parameters(params): Parameters<ProjectIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "list_project_timeboxes",
+            &json!({"project_id": params.project_id}),
+        );
 
-        let result = self.clients.projects.list_timeboxes(&params.project_id).await
+        let result = self
+            .clients
+            .projects
+            .list_timeboxes(&params.project_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1058,10 +1335,20 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List team members for a project.")]
-    async fn list_project_teams(&self, Parameters(params): Parameters<ProjectIdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_project_teams", &json!({"project_id": params.project_id}));
+    async fn list_project_teams(
+        &self,
+        Parameters(params): Parameters<ProjectIdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "list_project_teams",
+            &json!({"project_id": params.project_id}),
+        );
 
-        let result = self.clients.projects.list_team_members(&params.project_id).await
+        let result = self
+            .clients
+            .projects
+            .list_team_members(&params.project_id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1074,7 +1361,11 @@ impl SapCloudAlmServer {
     async fn list_programs(&self) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_programs", &json!({}));
 
-        let result = self.clients.projects.list_programs().await
+        let result = self
+            .clients
+            .projects
+            .list_programs()
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1084,10 +1375,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get program details by ID.")]
-    async fn get_program(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_program", &json!({"id": params.id}));
+    async fn get_program(
+        &self,
+        Parameters(params): Parameters<IdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_program", &json!({"id": params.id}));
 
-        let result = self.clients.projects.get_program(&params.id).await
+        let result = self
+            .clients
+            .projects
+            .get_program(&params.id)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1101,7 +1400,10 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "List manual test cases with OData filtering.")]
-    async fn list_testcases(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
+    async fn list_testcases(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("list_testcases", &json!(params));
 
         let query = build_odata_query(
@@ -1113,7 +1415,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.testmanagement.list_testcases(query).await
+        let result = self
+            .clients
+            .testmanagement
+            .list_testcases(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1123,10 +1429,18 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get a test case by UUID.")]
-    async fn get_testcase(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_testcase", &json!({"uuid": params.uuid}));
+    async fn get_testcase(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_testcase", &json!({"uuid": params.uuid}));
 
-        let result = self.clients.testmanagement.get_testcase(&params.uuid).await
+        let result = self
+            .clients
+            .testmanagement
+            .get_testcase(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1135,8 +1449,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new manual test case. Requires user confirmation before execution.")]
-    async fn create_testcase(&self, Parameters(params): Parameters<CreateTestcaseParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new manual test case. Requires user confirmation before execution."
+    )]
+    async fn create_testcase(
+        &self,
+        Parameters(params): Parameters<CreateTestcaseParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("create_testcase", &json!(params));
 
         let request = CreateTestCaseRequest {
@@ -1145,7 +1464,11 @@ impl SapCloudAlmServer {
             project_id: params.project_id,
         };
 
-        let result = self.clients.testmanagement.create_testcase(&request).await
+        let result = self
+            .clients
+            .testmanagement
+            .create_testcase(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1154,8 +1477,13 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Update an existing test case. Requires user confirmation before execution.")]
-    async fn update_testcase(&self, Parameters(params): Parameters<UpdateTestcaseParams>) -> Result<CallToolResult, McpError> {
+    #[tool(
+        description = "[EXPERIMENTAL] Update an existing test case. Requires user confirmation before execution."
+    )]
+    async fn update_testcase(
+        &self,
+        Parameters(params): Parameters<UpdateTestcaseParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("update_testcase", &json!(params));
 
         let request = UpdateTestCaseRequest {
@@ -1164,7 +1492,11 @@ impl SapCloudAlmServer {
             status_code: params.status_code,
         };
 
-        let result = self.clients.testmanagement.update_testcase(&params.uuid, &request).await
+        let result = self
+            .clients
+            .testmanagement
+            .update_testcase(&params.uuid, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1173,21 +1505,37 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete a test case by UUID. Requires user confirmation before execution.")]
-    async fn delete_testcase(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_testcase", &json!({"uuid": params.uuid}));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete a test case by UUID. Requires user confirmation before execution."
+    )]
+    async fn delete_testcase(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_testcase", &json!({"uuid": params.uuid}));
 
-        self.clients.testmanagement.delete_testcase(&params.uuid).await
+        self.clients
+            .testmanagement
+            .delete_testcase(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_testcase", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_testcase", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true, "uuid": params.uuid}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true, "uuid": params.uuid}).to_string(),
+        )]))
     }
 
     #[tool(description = "List test activities with OData filtering.")]
-    async fn list_test_activities(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_test_activities", &json!(params));
+    async fn list_test_activities(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_test_activities", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1198,7 +1546,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.testmanagement.list_activities(query).await
+        let result = self
+            .clients
+            .testmanagement
+            .list_activities(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1207,9 +1559,15 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a test activity for a test case. Requires user confirmation before execution.")]
-    async fn create_test_activity(&self, Parameters(params): Parameters<CreateTestActivityParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("create_test_activity", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Create a test activity for a test case. Requires user confirmation before execution."
+    )]
+    async fn create_test_activity(
+        &self,
+        Parameters(params): Parameters<CreateTestActivityParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("create_test_activity", &json!(params));
 
         let request = CreateTestActivityRequest {
             title: params.title,
@@ -1218,7 +1576,11 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.clients.testmanagement.create_activity(&request).await
+        let result = self
+            .clients
+            .testmanagement
+            .create_activity(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1228,8 +1590,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List test actions with OData filtering.")]
-    async fn list_test_actions(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_test_actions", &json!(params));
+    async fn list_test_actions(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_test_actions", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1240,7 +1606,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.testmanagement.list_actions(query).await
+        let result = self
+            .clients
+            .testmanagement
+            .list_actions(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1249,9 +1619,15 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a test action for an activity. Requires user confirmation before execution.")]
-    async fn create_test_action(&self, Parameters(params): Parameters<CreateTestActionParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("create_test_action", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Create a test action for an activity. Requires user confirmation before execution."
+    )]
+    async fn create_test_action(
+        &self,
+        Parameters(params): Parameters<CreateTestActionParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("create_test_action", &json!(params));
 
         let request = CreateTestActionRequest {
             title: params.title,
@@ -1262,7 +1638,11 @@ impl SapCloudAlmServer {
             is_evidence_required: params.is_evidence_required,
         };
 
-        let result = self.clients.testmanagement.create_action(&request).await
+        let result = self
+            .clients
+            .testmanagement
+            .create_action(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1276,8 +1656,12 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "List process hierarchy nodes with OData filtering.")]
-    async fn list_hierarchy_nodes(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_hierarchy_nodes", &json!(params));
+    async fn list_hierarchy_nodes(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_hierarchy_nodes", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1288,7 +1672,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processhierarchy.list_nodes(query).await
+        let result = self
+            .clients
+            .processhierarchy
+            .list_nodes(query)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1297,16 +1685,30 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "Get a hierarchy node by UUID. Optionally expand toParentNode, toChildNodes, toExternalReferences.")]
-    async fn get_hierarchy_node(&self, Parameters(params): Parameters<GetHierarchyNodeParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_hierarchy_node", &json!({"uuid": params.uuid, "expand": params.expand}));
+    #[tool(
+        description = "Get a hierarchy node by UUID. Optionally expand toParentNode, toChildNodes, toExternalReferences."
+    )]
+    async fn get_hierarchy_node(
+        &self,
+        Parameters(params): Parameters<GetHierarchyNodeParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "get_hierarchy_node",
+            &json!({"uuid": params.uuid, "expand": params.expand}),
+        );
 
         let result = if let Some(ref expand) = params.expand {
             let expand_list: Vec<&str> = expand.split(',').map(|s: &str| s.trim()).collect();
-            self.clients.processhierarchy.get_node_with_expand(&params.uuid, &expand_list).await
+            self.clients
+                .processhierarchy
+                .get_node_with_expand(&params.uuid, &expand_list)
+                .await
         } else {
-            self.clients.processhierarchy.get_node(&params.uuid).await
-                .map(|n| serde_json::to_value(n).map_err(|e| crate::error::ApiError::JsonParse(e)))
+            self.clients
+                .processhierarchy
+                .get_node(&params.uuid)
+                .await
+                .map(|n| serde_json::to_value(n).map_err(crate::error::ApiError::JsonParse))
                 .and_then(|r| r)
         };
 
@@ -1316,9 +1718,15 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Create a new hierarchy node. Requires user confirmation before execution. Required: title.")]
-    async fn create_hierarchy_node(&self, Parameters(params): Parameters<CreateHierarchyNodeParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("create_hierarchy_node", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Create a new hierarchy node. Requires user confirmation before execution. Required: title."
+    )]
+    async fn create_hierarchy_node(
+        &self,
+        Parameters(params): Parameters<CreateHierarchyNodeParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("create_hierarchy_node", &json!(params));
 
         let request = CreateHierarchyNodeRequest {
             title: params.title,
@@ -1327,7 +1735,11 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.clients.processhierarchy.create_node(&request).await
+        let result = self
+            .clients
+            .processhierarchy
+            .create_node(&request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1336,9 +1748,15 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Update an existing hierarchy node. Requires user confirmation before execution.")]
-    async fn update_hierarchy_node(&self, Parameters(params): Parameters<UpdateHierarchyNodeParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("update_hierarchy_node", &json!(params));
+    #[tool(
+        description = "[EXPERIMENTAL] Update an existing hierarchy node. Requires user confirmation before execution."
+    )]
+    async fn update_hierarchy_node(
+        &self,
+        Parameters(params): Parameters<UpdateHierarchyNodeParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("update_hierarchy_node", &json!(params));
 
         let request = UpdateHierarchyNodeRequest {
             title: params.title,
@@ -1346,7 +1764,11 @@ impl SapCloudAlmServer {
             sequence: params.sequence,
         };
 
-        let result = self.clients.processhierarchy.update_node(&params.uuid, &request).await
+        let result = self
+            .clients
+            .processhierarchy
+            .update_node(&params.uuid, &request)
+            .await
             .map_err(to_mcp_error)?;
 
         let json = serde_json::to_value(&result).map_err(to_mcp_error)?;
@@ -1355,16 +1777,28 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Delete a hierarchy node by UUID. Requires user confirmation before execution.")]
-    async fn delete_hierarchy_node(&self, Parameters(params): Parameters<UuidParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("delete_hierarchy_node", &json!({"uuid": params.uuid}));
+    #[tool(
+        description = "[EXPERIMENTAL] Delete a hierarchy node by UUID. Requires user confirmation before execution."
+    )]
+    async fn delete_hierarchy_node(
+        &self,
+        Parameters(params): Parameters<UuidParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("delete_hierarchy_node", &json!({"uuid": params.uuid}));
 
-        self.clients.processhierarchy.delete_node(&params.uuid).await
+        self.clients
+            .processhierarchy
+            .delete_node(&params.uuid)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("delete_hierarchy_node", &json!({"deleted": true}));
+        self.debug
+            .log_tool_result("delete_hierarchy_node", &json!({"deleted": true}));
 
-        Ok(CallToolResult::success(vec![Content::text(json!({"deleted": true, "uuid": params.uuid}).to_string())]))
+        Ok(CallToolResult::success(vec![Content::text(
+            json!({"deleted": true, "uuid": params.uuid}).to_string(),
+        )]))
     }
 
     // ========================================================================
@@ -1372,35 +1806,48 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "Query a generic analytics dataset by provider name.")]
-    async fn query_analytics_dataset(&self, Parameters(params): Parameters<QueryDatasetParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("query_analytics_dataset", &json!({"provider": params.provider}));
+    async fn query_analytics_dataset(
+        &self,
+        Parameters(params): Parameters<QueryDatasetParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "query_analytics_dataset",
+            &json!({"provider": params.provider}),
+        );
 
-        let result = self.clients.analytics.query_dataset(
-            &params.provider,
-            params.filter,
-            params.top,
-            params.skip,
-        ).await.map_err(to_mcp_error)?;
+        let result = self
+            .clients
+            .analytics
+            .query_dataset(&params.provider, params.filter, params.top, params.skip)
+            .await
+            .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("query_analytics_dataset", &result);
+        self.debug
+            .log_tool_result("query_analytics_dataset", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "List available analytics data providers.")]
     async fn list_analytics_providers(&self) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_analytics_providers", &json!({}));
+        self.debug
+            .log_tool_call("list_analytics_providers", &json!({}));
 
         let result = self.clients.analytics.list_providers();
 
-        self.debug.log_tool_result("list_analytics_providers", &result);
+        self.debug
+            .log_tool_result("list_analytics_providers", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get requirements analytics data.")]
-    async fn get_analytics_requirements(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_requirements", &json!(params));
+    async fn get_analytics_requirements(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_requirements", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1411,17 +1858,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_requirements(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_requirements(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_requirements", &result);
+        self.debug
+            .log_tool_result("get_analytics_requirements", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get tasks analytics data.")]
-    async fn get_analytics_tasks(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_tasks", &json!(params));
+    async fn get_analytics_tasks(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_tasks", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1432,7 +1888,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_tasks_analytics(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_tasks_analytics(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_tasks", &result);
@@ -1441,8 +1901,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get defects analytics data.")]
-    async fn get_analytics_defects(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_defects", &json!(params));
+    async fn get_analytics_defects(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_defects", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1453,7 +1917,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_defects(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_defects(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_defects", &result);
@@ -1462,8 +1930,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get features analytics data.")]
-    async fn get_analytics_features(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_features", &json!(params));
+    async fn get_analytics_features(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_features", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1474,17 +1946,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_features(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_features(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_features", &result);
+        self.debug
+            .log_tool_result("get_analytics_features", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get tests analytics data.")]
-    async fn get_analytics_tests(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_tests", &json!(params));
+    async fn get_analytics_tests(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_tests", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1495,7 +1976,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_tests(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_tests(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_tests", &result);
@@ -1504,8 +1989,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get quality gates analytics data.")]
-    async fn get_analytics_quality_gates(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_quality_gates", &json!(params));
+    async fn get_analytics_quality_gates(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_quality_gates", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1516,17 +2005,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_quality_gates(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_quality_gates(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_quality_gates", &result);
+        self.debug
+            .log_tool_result("get_analytics_quality_gates", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get projects analytics data.")]
-    async fn get_analytics_projects(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_projects", &json!(params));
+    async fn get_analytics_projects(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_projects", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1537,17 +2035,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_projects(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_projects(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_projects", &result);
+        self.debug
+            .log_tool_result("get_analytics_projects", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get configuration items analytics data.")]
-    async fn get_analytics_configuration_items(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_configuration_items", &json!(params));
+    async fn get_analytics_configuration_items(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_configuration_items", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1558,17 +2065,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_configuration_items(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_configuration_items(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_configuration_items", &result);
+        self.debug
+            .log_tool_result("get_analytics_configuration_items", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get exceptions analytics data.")]
-    async fn get_analytics_exceptions(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_exceptions", &json!(params));
+    async fn get_analytics_exceptions(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_exceptions", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1579,17 +2095,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_exceptions(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_exceptions(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_exceptions", &result);
+        self.debug
+            .log_tool_result("get_analytics_exceptions", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get jobs analytics data.")]
-    async fn get_analytics_jobs(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_jobs", &json!(params));
+    async fn get_analytics_jobs(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_jobs", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1600,7 +2125,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_jobs(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_jobs(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_jobs", &result);
@@ -1609,8 +2138,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get messages analytics data.")]
-    async fn get_analytics_messages(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_messages", &json!(params));
+    async fn get_analytics_messages(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_messages", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1621,17 +2154,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_messages(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_messages(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_messages", &result);
+        self.debug
+            .log_tool_result("get_analytics_messages", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get metrics analytics data.")]
-    async fn get_analytics_metrics(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_metrics", &json!(params));
+    async fn get_analytics_metrics(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_metrics", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1642,7 +2184,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_metrics(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_metrics(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_analytics_metrics", &result);
@@ -1651,8 +2197,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "Get monitoring events analytics data.")]
-    async fn get_analytics_monitoring_events(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_monitoring_events", &json!(params));
+    async fn get_analytics_monitoring_events(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_monitoring_events", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1663,17 +2213,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_monitoring_events(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_monitoring_events(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_monitoring_events", &result);
+        self.debug
+            .log_tool_result("get_analytics_monitoring_events", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get requests analytics data.")]
-    async fn get_analytics_requests(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_requests", &json!(params));
+    async fn get_analytics_requests(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_requests", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1684,17 +2243,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_requests(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_requests(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_requests", &result);
+        self.debug
+            .log_tool_result("get_analytics_requests", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get scenario executions analytics data.")]
-    async fn get_analytics_scenario_executions(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_scenario_executions", &json!(params));
+    async fn get_analytics_scenario_executions(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_scenario_executions", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1705,17 +2273,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_scenario_executions(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_scenario_executions(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_scenario_executions", &result);
+        self.debug
+            .log_tool_result("get_analytics_scenario_executions", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get service levels analytics data.")]
-    async fn get_analytics_service_levels(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_service_levels", &json!(params));
+    async fn get_analytics_service_levels(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_service_levels", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1726,17 +2303,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_service_levels(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_service_levels(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_service_levels", &result);
+        self.debug
+            .log_tool_result("get_analytics_service_levels", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get status events analytics data.")]
-    async fn get_analytics_status_events(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_analytics_status_events", &json!(params));
+    async fn get_analytics_status_events(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_analytics_status_events", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1747,10 +2333,15 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.analytics.get_status_events(query).await
+        let result = self
+            .clients
+            .analytics
+            .get_status_events(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("get_analytics_status_events", &result);
+        self.debug
+            .log_tool_result("get_analytics_status_events", &result);
 
         to_json_result(&result)
     }
@@ -1760,8 +2351,12 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "List business processes with OData filtering.")]
-    async fn list_business_processes(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_business_processes", &json!(params));
+    async fn list_business_processes(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_business_processes", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1772,19 +2367,32 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_business_processes(query).await
+        let result = self
+            .clients
+            .processmonitoring
+            .list_business_processes(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_business_processes", &result);
+        self.debug
+            .log_tool_result("list_business_processes", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get a business process by ID.")]
-    async fn get_business_process(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_business_process", &json!({"id": params.id}));
+    async fn get_business_process(
+        &self,
+        Parameters(params): Parameters<IdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_business_process", &json!({"id": params.id}));
 
-        let result = self.clients.processmonitoring.get_business_process(&params.id).await
+        let result = self
+            .clients
+            .processmonitoring
+            .get_business_process(&params.id)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_business_process", &result);
@@ -1793,8 +2401,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List solution processes with OData filtering.")]
-    async fn list_solution_processes(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_solution_processes", &json!(params));
+    async fn list_solution_processes(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_solution_processes", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1805,19 +2417,32 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_solution_processes(query).await
+        let result = self
+            .clients
+            .processmonitoring
+            .list_solution_processes(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_solution_processes", &result);
+        self.debug
+            .log_tool_result("list_solution_processes", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "Get a solution process by ID.")]
-    async fn get_solution_process(&self, Parameters(params): Parameters<IdParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("get_solution_process", &json!({"id": params.id}));
+    async fn get_solution_process(
+        &self,
+        Parameters(params): Parameters<IdParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("get_solution_process", &json!({"id": params.id}));
 
-        let result = self.clients.processmonitoring.get_solution_process(&params.id).await
+        let result = self
+            .clients
+            .processmonitoring
+            .get_solution_process(&params.id)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_solution_process", &result);
@@ -1826,8 +2451,12 @@ impl SapCloudAlmServer {
     }
 
     #[tool(description = "List solution process flows with OData filtering.")]
-    async fn list_solution_process_flows(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_solution_process_flows", &json!(params));
+    async fn list_solution_process_flows(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_solution_process_flows", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1838,17 +2467,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_solution_process_flows(query).await
+        let result = self
+            .clients
+            .processmonitoring
+            .list_solution_process_flows(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_solution_process_flows", &result);
+        self.debug
+            .log_tool_result("list_solution_process_flows", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "List solution value flow diagrams with OData filtering.")]
-    async fn list_solution_value_flow_diagrams(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_solution_value_flow_diagrams", &json!(params));
+    async fn list_solution_value_flow_diagrams(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_solution_value_flow_diagrams", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1859,17 +2497,26 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_solution_value_flow_diagrams(query).await
+        let result = self
+            .clients
+            .processmonitoring
+            .list_solution_value_flow_diagrams(query)
+            .await
             .map_err(to_mcp_error)?;
 
-        self.debug.log_tool_result("list_solution_value_flow_diagrams", &result);
+        self.debug
+            .log_tool_result("list_solution_value_flow_diagrams", &result);
 
         to_json_result(&result)
     }
 
     #[tool(description = "List process assets with OData filtering.")]
-    async fn list_process_assets(&self, Parameters(params): Parameters<ODataListParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("list_process_assets", &json!(params));
+    async fn list_process_assets(
+        &self,
+        Parameters(params): Parameters<ODataListParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug
+            .log_tool_call("list_process_assets", &json!(params));
 
         let query = build_odata_query(
             params.filter,
@@ -1880,7 +2527,11 @@ impl SapCloudAlmServer {
             params.skip,
         );
 
-        let result = self.clients.processmonitoring.list_assets(query).await
+        let result = self
+            .clients
+            .processmonitoring
+            .list_assets(query)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("list_process_assets", &result);
@@ -1893,7 +2544,10 @@ impl SapCloudAlmServer {
     // ========================================================================
 
     #[tool(description = "Get logs (outbound) in OpenTelemetry format. Required: provider.")]
-    async fn get_logs(&self, Parameters(params): Parameters<GetLogsToolParams>) -> Result<CallToolResult, McpError> {
+    async fn get_logs(
+        &self,
+        Parameters(params): Parameters<GetLogsToolParams>,
+    ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call("get_logs", &json!(params));
 
         let log_params = GetLogsParams {
@@ -1910,7 +2564,11 @@ impl SapCloudAlmServer {
             on_limit: None,
         };
 
-        let result = self.clients.logs.get_logs(&log_params).await
+        let result = self
+            .clients
+            .logs
+            .get_logs(&log_params)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("get_logs", &result);
@@ -1918,9 +2576,17 @@ impl SapCloudAlmServer {
         to_json_result(&result)
     }
 
-    #[tool(description = "[EXPERIMENTAL] Post logs (inbound) in OpenTelemetry format. Requires user confirmation before execution. Required: use_case, service_id, logs.")]
-    async fn post_logs(&self, Parameters(params): Parameters<PostLogsToolParams>) -> Result<CallToolResult, McpError> {
-        self.debug.log_tool_call("post_logs", &json!({"use_case": params.use_case, "service_id": params.service_id}));
+    #[tool(
+        description = "[EXPERIMENTAL] Post logs (inbound) in OpenTelemetry format. Requires user confirmation before execution. Required: use_case, service_id, logs."
+    )]
+    async fn post_logs(
+        &self,
+        Parameters(params): Parameters<PostLogsToolParams>,
+    ) -> Result<CallToolResult, McpError> {
+        self.debug.log_tool_call(
+            "post_logs",
+            &json!({"use_case": params.use_case, "service_id": params.service_id}),
+        );
 
         let log_params = PostLogsParams {
             use_case: params.use_case,
@@ -1930,7 +2596,11 @@ impl SapCloudAlmServer {
             tag: params.tag,
         };
 
-        let result = self.clients.logs.post_logs(&log_params, &params.logs).await
+        let result = self
+            .clients
+            .logs
+            .post_logs(&log_params, &params.logs)
+            .await
             .map_err(to_mcp_error)?;
 
         self.debug.log_tool_result("post_logs", &result);

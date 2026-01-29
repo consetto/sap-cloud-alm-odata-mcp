@@ -215,7 +215,11 @@ impl TasksClient {
     }
 
     /// Update an existing task.
-    pub async fn update_task(&self, id: &str, request: &UpdateTaskRequest) -> Result<Task, ApiError> {
+    pub async fn update_task(
+        &self,
+        id: &str,
+        request: &UpdateTaskRequest,
+    ) -> Result<Task, ApiError> {
         let url = format!("{}/tasks/{}", self.base_url, id);
         self.patch(&url, request).await
     }
@@ -243,7 +247,10 @@ impl TasksClient {
     }
 
     /// List references for a task.
-    pub async fn list_task_references(&self, task_id: &str) -> Result<Vec<TaskReference>, ApiError> {
+    pub async fn list_task_references(
+        &self,
+        task_id: &str,
+    ) -> Result<Vec<TaskReference>, ApiError> {
         let url = format!("{}/tasks/{}/references", self.base_url, task_id);
         self.get(&url).await
     }

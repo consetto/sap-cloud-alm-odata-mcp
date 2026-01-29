@@ -110,39 +110,73 @@ impl TestManagementClient {
         Self { odata_client }
     }
 
-    pub async fn list_testcases(&self, query: Option<ODataQuery>) -> Result<ODataCollection<TestCase>, ApiError> {
-        self.odata_client.get_collection("/ManualTestCases", query).await
+    pub async fn list_testcases(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<ODataCollection<TestCase>, ApiError> {
+        self.odata_client
+            .get_collection("/ManualTestCases", query)
+            .await
     }
 
     pub async fn get_testcase(&self, uuid: &str) -> Result<TestCase, ApiError> {
-        self.odata_client.get_entity_by_uuid("/ManualTestCases", uuid).await
+        self.odata_client
+            .get_entity_by_uuid("/ManualTestCases", uuid)
+            .await
     }
 
-    pub async fn create_testcase(&self, request: &CreateTestCaseRequest) -> Result<TestCase, ApiError> {
-        self.odata_client.create_entity("/ManualTestCases", request).await
+    pub async fn create_testcase(
+        &self,
+        request: &CreateTestCaseRequest,
+    ) -> Result<TestCase, ApiError> {
+        self.odata_client
+            .create_entity("/ManualTestCases", request)
+            .await
     }
 
-    pub async fn update_testcase(&self, uuid: &str, request: &UpdateTestCaseRequest) -> Result<TestCase, ApiError> {
-        self.odata_client.update_entity_by_uuid("/ManualTestCases", uuid, request).await
+    pub async fn update_testcase(
+        &self,
+        uuid: &str,
+        request: &UpdateTestCaseRequest,
+    ) -> Result<TestCase, ApiError> {
+        self.odata_client
+            .update_entity_by_uuid("/ManualTestCases", uuid, request)
+            .await
     }
 
     pub async fn delete_testcase(&self, uuid: &str) -> Result<(), ApiError> {
-        self.odata_client.delete_entity_by_uuid("/ManualTestCases", uuid).await
+        self.odata_client
+            .delete_entity_by_uuid("/ManualTestCases", uuid)
+            .await
     }
 
-    pub async fn list_activities(&self, query: Option<ODataQuery>) -> Result<ODataCollection<TestActivity>, ApiError> {
+    pub async fn list_activities(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<ODataCollection<TestActivity>, ApiError> {
         self.odata_client.get_collection("/Activities", query).await
     }
 
-    pub async fn create_activity(&self, request: &CreateTestActivityRequest) -> Result<TestActivity, ApiError> {
-        self.odata_client.create_entity("/Activities", request).await
+    pub async fn create_activity(
+        &self,
+        request: &CreateTestActivityRequest,
+    ) -> Result<TestActivity, ApiError> {
+        self.odata_client
+            .create_entity("/Activities", request)
+            .await
     }
 
-    pub async fn list_actions(&self, query: Option<ODataQuery>) -> Result<ODataCollection<TestAction>, ApiError> {
+    pub async fn list_actions(
+        &self,
+        query: Option<ODataQuery>,
+    ) -> Result<ODataCollection<TestAction>, ApiError> {
         self.odata_client.get_collection("/Actions", query).await
     }
 
-    pub async fn create_action(&self, request: &CreateTestActionRequest) -> Result<TestAction, ApiError> {
+    pub async fn create_action(
+        &self,
+        request: &CreateTestActionRequest,
+    ) -> Result<TestAction, ApiError> {
         self.odata_client.create_entity("/Actions", request).await
     }
 }
