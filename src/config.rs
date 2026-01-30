@@ -115,7 +115,7 @@ impl Config {
             let region = self
                 .region
                 .as_ref()
-                .expect("region already validated as present");
+                .expect("region guaranteed present by Config::validate()");
             if !valid_regions.contains(&region.as_str()) {
                 return Err(ConfigError::Invalid(format!(
                     "Invalid region '{}'. Valid regions: {:?}",
@@ -141,10 +141,10 @@ impl Config {
                 "https://{}.authentication.{}.hana.ondemand.com/oauth/token",
                 self.tenant
                     .as_ref()
-                    .expect("tenant required in OAuth2 mode"),
+                    .expect("tenant guaranteed present by Config::validate()"),
                 self.region
                     .as_ref()
-                    .expect("region required in OAuth2 mode")
+                    .expect("region guaranteed present by Config::validate()")
             ))
         }
     }
@@ -162,10 +162,10 @@ impl Config {
                 "https://{}.{}.alm.cloud.sap",
                 self.tenant
                     .as_ref()
-                    .expect("tenant required in OAuth2 mode"),
+                    .expect("tenant guaranteed present by Config::validate()"),
                 self.region
                     .as_ref()
-                    .expect("region required in OAuth2 mode")
+                    .expect("region guaranteed present by Config::validate()")
             )
         }
     }

@@ -292,7 +292,7 @@ impl ODataClient {
     /// Execute GET request.
     async fn execute_get<T: DeserializeOwned>(&self, url: &str) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[ODATA] GET {}", url);
+            tracing::debug!(url = %url, "OData GET request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -316,7 +316,7 @@ impl ODataClient {
         body: &B,
     ) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[ODATA] POST {}", url);
+            tracing::debug!(url = %url, "OData POST request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -342,7 +342,7 @@ impl ODataClient {
         body: &B,
     ) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[ODATA] PATCH {}", url);
+            tracing::debug!(url = %url, "OData PATCH request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -364,7 +364,7 @@ impl ODataClient {
     /// Execute DELETE request.
     async fn execute_delete(&self, url: &str) -> Result<(), ApiError> {
         if self.debug {
-            eprintln!("[ODATA] DELETE {}", url);
+            tracing::debug!(url = %url, "OData DELETE request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -402,7 +402,7 @@ impl ODataClient {
                 } else {
                     body.clone()
                 };
-                eprintln!("[ODATA] Response: {}", truncated);
+                tracing::debug!(response = %truncated, "OData response received");
             }
             serde_json::from_str(&body).map_err(|e| {
                 ApiError::JsonParse(serde_json::Error::io(std::io::Error::new(
@@ -417,7 +417,7 @@ impl ODataClient {
         } else {
             let body = response.text().await.unwrap_or_default();
             if self.debug {
-                eprintln!("[ODATA] Error response: {} - {}", status, body);
+                tracing::debug!(status = %status, body = %body, "OData error response");
             }
             self.parse_error_response(status, &body)
         }
@@ -447,5 +447,175 @@ impl std::fmt::Debug for ODataClient {
             .field("base_url", &self.base_url)
             .field("debug", &self.debug)
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_query_returns_empty_string() {
+        let query = ODataQuery::new();
+        assert_eq!(query.to_query_string(), "");
+    }
+
+    #[test]
+    fn test_query_with_filter() {
+        let query = ODataQuery::new().filter("name eq 'test'");
+        let result = query.to_query_string();
+        assert!(result.starts_with("?$filter="));
+        assert!(result.contains("name%20eq%20%27test%27"));
+    }
+
+    #[test]
+    fn test_query_with_select() {
+        let query = ODataQuery::new().select(vec!["name".to_string(), "id".to_string()]);
+        assert_eq!(query.to_query_string(), "?$select=name,id");
+    }
+
+    #[test]
+    fn test_query_with_expand() {
+        let query = ODataQuery::new().expand(vec!["toProject".to_string(), "toStatus".to_string()]);
+        assert_eq!(query.to_query_string(), "?$expand=toProject,toStatus");
+    }
+
+    #[test]
+    fn test_query_with_orderby_asc() {
+        let query = ODataQuery::new().orderby("modifiedAt", SortOrder::Asc);
+        assert_eq!(query.to_query_string(), "?$orderby=modifiedAt asc");
+    }
+
+    #[test]
+    fn test_query_with_orderby_desc() {
+        let query = ODataQuery::new().orderby("createdAt", SortOrder::Desc);
+        assert_eq!(query.to_query_string(), "?$orderby=createdAt desc");
+    }
+
+    #[test]
+    fn test_query_with_multiple_orderby() {
+        let query = ODataQuery::new()
+            .orderby("status", SortOrder::Asc)
+            .orderby("modifiedAt", SortOrder::Desc);
+        assert_eq!(
+            query.to_query_string(),
+            "?$orderby=status asc,modifiedAt desc"
+        );
+    }
+
+    #[test]
+    fn test_query_with_top() {
+        let query = ODataQuery::new().top(10);
+        assert_eq!(query.to_query_string(), "?$top=10");
+    }
+
+    #[test]
+    fn test_query_with_skip() {
+        let query = ODataQuery::new().skip(20);
+        assert_eq!(query.to_query_string(), "?$skip=20");
+    }
+
+    #[test]
+    fn test_query_with_pagination() {
+        let query = ODataQuery::new().top(10).skip(20);
+        assert_eq!(query.to_query_string(), "?$top=10&$skip=20");
+    }
+
+    #[test]
+    fn test_query_with_multiple_params() {
+        let query = ODataQuery::new()
+            .filter("projectId eq 'abc'")
+            .select(vec!["id".to_string(), "title".to_string()])
+            .orderby("modifiedAt", SortOrder::Desc)
+            .top(50);
+        let result = query.to_query_string();
+        assert!(result.contains("$filter="));
+        assert!(result.contains("$select=id,title"));
+        assert!(
+            result.contains("$orderby=modifiedAt%20desc")
+                || result.contains("$orderby=modifiedAt desc")
+        );
+        assert!(result.contains("$top=50"));
+    }
+
+    #[test]
+    fn test_filter_url_encoding_special_characters() {
+        let query = ODataQuery::new().filter("name eq 'O'Reilly & Sons'");
+        let result = query.to_query_string();
+        // Should encode quotes and ampersand
+        assert!(result.contains("%27"));
+        assert!(result.contains("%26"));
+    }
+
+    #[test]
+    fn test_odata_collection_deserialization() {
+        let json = r#"{
+            "@odata.context": "https://example.com/$metadata#Features",
+            "@odata.count": 42,
+            "value": [{"id": "1"}, {"id": "2"}]
+        }"#;
+
+        #[derive(Debug, Deserialize)]
+        struct TestEntity {
+            id: String,
+        }
+
+        let collection: ODataCollection<TestEntity> = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            collection.context,
+            Some("https://example.com/$metadata#Features".to_string())
+        );
+        assert_eq!(collection.count, Some(42));
+        assert_eq!(collection.value.len(), 2);
+        assert_eq!(collection.value[0].id, "1");
+    }
+
+    #[test]
+    fn test_odata_collection_without_optional_fields() {
+        let json = r#"{"value": []}"#;
+
+        #[derive(Debug, Deserialize)]
+        struct TestEntity {
+            #[allow(dead_code)]
+            id: String,
+        }
+
+        let collection: ODataCollection<TestEntity> = serde_json::from_str(json).unwrap();
+        assert!(collection.context.is_none());
+        assert!(collection.count.is_none());
+        assert!(collection.next_link.is_none());
+        assert!(collection.value.is_empty());
+    }
+
+    #[test]
+    fn test_odata_error_response_deserialization() {
+        let json = r#"{
+            "error": {
+                "code": "404",
+                "message": "Resource not found"
+            }
+        }"#;
+
+        let error: ODataErrorResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(error.error.code, "404");
+        assert_eq!(error.error.message, "Resource not found");
+    }
+
+    #[test]
+    fn test_sort_order_clone() {
+        let asc = SortOrder::Asc;
+        let cloned = asc;
+        assert!(matches!(cloned, SortOrder::Asc));
+
+        let desc = SortOrder::Desc;
+        let cloned = desc;
+        assert!(matches!(cloned, SortOrder::Desc));
+    }
+
+    #[test]
+    fn test_odata_query_clone() {
+        let query = ODataQuery::new().filter("test").top(10);
+        let cloned = query.clone();
+        assert_eq!(cloned.to_query_string(), query.to_query_string());
     }
 }

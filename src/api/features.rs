@@ -125,6 +125,57 @@ impl FeaturesClient {
             .await
     }
 
+    /// Get a single feature by display ID (e.g., "6-123").
+    ///
+    /// # Arguments
+    ///
+    /// * `display_id` - The display ID of the feature (format: "projectNumber-featureNumber")
+    ///
+    /// # Returns
+    ///
+    /// The feature matching the display ID, or an error if not found.
+    ///
+    /// # Errors
+    ///
+    /// Returns `ApiError::HttpError` with NOT_FOUND status if no feature matches the display ID.
+    pub async fn get_feature_by_display_id(&self, display_id: &str) -> Result<Feature, ApiError> {
+        let query = ODataQuery::new()
+            .filter(format!("displayId eq '{}'", display_id))
+            .top(1);
+        let collection = self.list_features(Some(query)).await?;
+        collection.value.into_iter().next().ok_or_else(|| {
+            ApiError::HttpError {
+                status: reqwest::StatusCode::NOT_FOUND,
+                body: format!("Feature with displayId '{}' not found", display_id),
+            }
+        })
+    }
+
+    /// Get a feature by display ID with expanded relations.
+    ///
+    /// # Arguments
+    ///
+    /// * `display_id` - The display ID of the feature (format: "projectNumber-featureNumber")
+    /// * `expand` - List of navigation properties to expand
+    ///
+    /// # Returns
+    ///
+    /// The feature as a JSON Value with expanded relations, or an error if not found.
+    pub async fn get_feature_by_display_id_with_expand(
+        &self,
+        display_id: &str,
+        expand: &[&str],
+    ) -> Result<serde_json::Value, ApiError> {
+        // First, find the feature by display ID to get its UUID
+        let feature = self.get_feature_by_display_id(display_id).await?;
+        let uuid = feature.uuid.ok_or_else(|| ApiError::HttpError {
+            status: reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+            body: "Feature UUID is missing".to_string(),
+        })?;
+        // Then fetch with expanded relations using the UUID
+        self.get_feature_with_expand(&uuid, expand).await
+    }
+
     /// Get a feature with expanded relations.
     pub async fn get_feature_with_expand(
         &self,

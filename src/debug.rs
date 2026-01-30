@@ -26,11 +26,11 @@ impl DebugLogger {
                 .open(&path)
             {
                 Ok(file) => {
-                    eprintln!("[DEBUG] Trace file: {}", path.display());
+                    tracing::info!(path = %path.display(), "Debug trace file created");
                     (Some(Mutex::new(file)), Some(path))
                 }
                 Err(e) => {
-                    eprintln!("[DEBUG] Failed to create trace file: {}", e);
+                    tracing::warn!(error = %e, "Failed to create trace file");
                     (None, None)
                 }
             }

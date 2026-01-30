@@ -113,7 +113,7 @@ impl OAuth2Client {
         let auth_header = format!("Basic {}", encoded);
 
         if self.config.debug {
-            eprintln!("[AUTH] Fetching token from: {}", token_url);
+            tracing::debug!(url = %token_url, "Fetching OAuth2 token");
         }
 
         let response = self
@@ -129,7 +129,7 @@ impl OAuth2Client {
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
             if self.config.debug {
-                eprintln!("[AUTH] Token request failed: {} - {}", status, body);
+                tracing::debug!(status = %status, body = %body, "Token request failed");
             }
             return Err(AuthError::TokenRequestFailed { status, body });
         }
@@ -143,9 +143,9 @@ impl OAuth2Client {
         let expires_at = Utc::now() + Duration::seconds(token_response.expires_in);
 
         if self.config.debug {
-            eprintln!(
-                "[AUTH] Token acquired, expires at: {}",
-                expires_at.format("%Y-%m-%d %H:%M:%S UTC")
+            tracing::debug!(
+                expires_at = %expires_at.format("%Y-%m-%d %H:%M:%S UTC"),
+                "OAuth2 token acquired"
             );
         }
 

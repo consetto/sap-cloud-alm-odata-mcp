@@ -12,6 +12,11 @@ pub struct AnalyticsClient {
 }
 
 impl AnalyticsClient {
+    /// Creates a new Analytics API client.
+    ///
+    /// # Arguments
+    ///
+    /// * `odata_client` - The OData client configured for the Analytics API endpoint
     pub fn new(odata_client: ODataClient) -> Self {
         Self { odata_client }
     }

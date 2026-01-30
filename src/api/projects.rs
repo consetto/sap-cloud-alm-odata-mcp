@@ -154,7 +154,7 @@ impl ProjectsClient {
     /// Execute GET request.
     async fn get<T: serde::de::DeserializeOwned>(&self, url: &str) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[PROJECTS] GET {}", url);
+            tracing::debug!(url = %url, "Projects API GET request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -184,7 +184,7 @@ impl ProjectsClient {
         body: &B,
     ) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[PROJECTS] POST {}", url);
+            tracing::debug!(url = %url, "Projects API POST request");
         }
 
         let token = self.auth_client.get_token().await?;

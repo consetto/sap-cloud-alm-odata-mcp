@@ -142,7 +142,7 @@ impl LogsClient {
 
     async fn get(&self, url: &str) -> Result<Value, ApiError> {
         if self.debug {
-            eprintln!("[LOGS] GET {}", url);
+            tracing::debug!(url = %url, "Logs API GET request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -167,7 +167,7 @@ impl LogsClient {
 
     async fn post(&self, url: &str, body: &Value) -> Result<Value, ApiError> {
         if self.debug {
-            eprintln!("[LOGS] POST {}", url);
+            tracing::debug!(url = %url, "Logs API POST request");
         }
 
         let token = self.auth_client.get_token().await?;

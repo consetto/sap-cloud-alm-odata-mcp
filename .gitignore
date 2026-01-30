@@ -21,3 +21,10 @@ config.json
 
 # Debug/trace files
 sap_calm_mcp_trace_*.log
+
+# Claude
+CLAUDE.md
+
+# Project-specific ignores 
+.gitignore
+mcp_test

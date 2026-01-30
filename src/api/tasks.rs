@@ -270,7 +270,7 @@ impl TasksClient {
     /// Execute GET request.
     async fn get<T: serde::de::DeserializeOwned>(&self, url: &str) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[TASKS] GET {}", url);
+            tracing::debug!(url = %url, "Tasks API GET request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -300,7 +300,7 @@ impl TasksClient {
         body: &B,
     ) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[TASKS] POST {}", url);
+            tracing::debug!(url = %url, "Tasks API POST request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -332,7 +332,7 @@ impl TasksClient {
         body: &B,
     ) -> Result<T, ApiError> {
         if self.debug {
-            eprintln!("[TASKS] PATCH {}", url);
+            tracing::debug!(url = %url, "Tasks API PATCH request");
         }
 
         let token = self.auth_client.get_token().await?;
@@ -360,7 +360,7 @@ impl TasksClient {
     /// Execute DELETE request.
     async fn delete(&self, url: &str) -> Result<(), ApiError> {
         if self.debug {
-            eprintln!("[TASKS] DELETE {}", url);
+            tracing::debug!(url = %url, "Tasks API DELETE request");
         }
 
         let token = self.auth_client.get_token().await?;

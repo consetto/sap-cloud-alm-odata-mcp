@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ));
         }
         if let Some(path) = debug.trace_path() {
-            eprintln!("[DEBUG] Trace file: {}", path.display());
+            tracing::info!(path = %path.display(), "Trace file created");
         }
     }
 

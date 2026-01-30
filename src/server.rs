@@ -163,8 +163,10 @@ pub struct ListFeaturesParams {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct GetFeatureParams {
-    /// Feature UUID
-    pub uuid: String,
+    /// Feature UUID (use this OR display_id, not both)
+    pub uuid: Option<String>,
+    /// Feature display ID like "6-123" (use this OR uuid, not both)
+    pub display_id: Option<String>,
     /// Navigation properties to expand (comma-separated): toProject, toRelease, toScope, toStatus, toPriority, toTransports, toExternalReferences
     pub expand: Option<String>,
 }
@@ -568,29 +570,64 @@ impl SapCloudAlmServer {
         to_json_result(&json)
     }
 
-    #[tool(description = "Get a single feature by UUID. Optionally expand related entities.")]
+    #[tool(
+        description = "Get a single feature by UUID or display ID. Optionally expand related entities."
+    )]
     async fn get_feature(
         &self,
         Parameters(params): Parameters<GetFeatureParams>,
     ) -> Result<CallToolResult, McpError> {
         self.debug.log_tool_call(
             "get_feature",
-            &json!({"uuid": params.uuid, "expand": params.expand}),
+            &json!({"uuid": params.uuid, "display_id": params.display_id, "expand": params.expand}),
         );
 
-        let result = if let Some(ref expand) = params.expand {
-            let expand_list: Vec<&str> = expand.split(',').map(|s: &str| s.trim()).collect();
-            self.clients
-                .features
-                .get_feature_with_expand(&params.uuid, &expand_list)
-                .await
-        } else {
-            self.clients
-                .features
-                .get_feature(&params.uuid)
-                .await
-                .map(|f| serde_json::to_value(f).map_err(crate::error::ApiError::JsonParse))
-                .and_then(|r| r)
+        // Determine which identifier to use: display_id takes precedence if both are provided
+        let result = match (&params.display_id, &params.uuid) {
+            (Some(display_id), _) => {
+                // Use display_id lookup
+                if let Some(ref expand) = params.expand {
+                    let expand_list: Vec<&str> =
+                        expand.split(',').map(|s: &str| s.trim()).collect();
+                    self.clients
+                        .features
+                        .get_feature_by_display_id_with_expand(display_id, &expand_list)
+                        .await
+                } else {
+                    self.clients
+                        .features
+                        .get_feature_by_display_id(display_id)
+                        .await
+                        .map(|f| serde_json::to_value(f).map_err(crate::error::ApiError::JsonParse))
+                        .and_then(|r| r)
+                }
+            }
+            (None, Some(uuid)) => {
+                // Use UUID lookup
+                if let Some(ref expand) = params.expand {
+                    let expand_list: Vec<&str> =
+                        expand.split(',').map(|s: &str| s.trim()).collect();
+                    self.clients
+                        .features
+                        .get_feature_with_expand(uuid, &expand_list)
+                        .await
+                } else {
+                    self.clients
+                        .features
+                        .get_feature(uuid)
+                        .await
+                        .map(|f| serde_json::to_value(f).map_err(crate::error::ApiError::JsonParse))
+                        .and_then(|r| r)
+                }
+            }
+            (None, None) => {
+                // Neither provided - return error
+                return Err(McpError {
+                    code: ErrorCode::INVALID_PARAMS,
+                    message: Cow::from("Either 'uuid' or 'display_id' must be provided"),
+                    data: None,
+                });
+            }
         };
 
         let json = result.map_err(to_mcp_error)?;
